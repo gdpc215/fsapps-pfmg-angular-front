@@ -1,0 +1,45 @@
+{
+  "name": "fsapps-pfmg-angular-front",
+  "version": "0.0.1",
+  "description": "Angular frontend for project PFMG",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "lint": "ng lint"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^19.2.0",
+    "@angular/cdk": "^19.2.0",
+    "@angular/common": "^19.2.0",
+    "@angular/compiler": "^19.2.0",
+    "@angular/core": "^19.2.0",
+    "@angular/forms": "^19.2.0",
+    "@angular/material": "^19.0.3",
+    "@angular/material-moment-adapter": "^19.2.7",
+    "@angular/platform-browser": "^19.2.0",
+    "@angular/platform-browser-dynamic": "^19.2.0",
+    "@angular/router": "^19.2.0",
+    "date-fns": "^4.1.0",
+    "moment": "^2.30.1",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.6.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^19.2.8",
+    "@angular/cli": "^19.2.8",
+    "@angular/compiler-cli": "^19.2.0",
+    "@types/jasmine": "~5.1.0",
+    "jasmine-core": "~5.1.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.8.3"
+  }
+}

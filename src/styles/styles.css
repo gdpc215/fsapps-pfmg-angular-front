@@ -1,0 +1,30 @@
+/* Global Styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@tailwind variants;
+
+:root {
+  --global-font: "Roboto", serif;
+  /* --global-font: 'Open Sans', sans-serif; */
+  /* --global-font: "Montserrat", serif; */
+  --global-font-weight: 300;
+  /* 500 */
+}
+
+* {
+  font-family: var(--global-font);
+  font-optical-sizing: auto;
+  font-style: normal;
+  font-weight: var(--global-font-weight);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
+}
+
+body {
+  color: rgb(0, 0, 0);
+  background-color: #fff;
+  height: 100svh !important;
+  margin: 0;
+}

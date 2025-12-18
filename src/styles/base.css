@@ -1,0 +1,82 @@
+/**
+ * Base Styles
+ * Element defaults and resets
+ */
+
+:root {
+  --global-font: "Roboto", serif;
+  /* --global-font: 'Open Sans', sans-serif; */
+  /* --global-font: "Montserrat", serif; */
+  --global-font-weight: 300;
+  /* 500 */
+}
+
+* {
+  font-family: var(--font-body);
+  font-optical-sizing: auto;
+  font-style: normal;
+  font-weight: var(--font-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
+}
+
+body {
+  color: rgb(0, 0, 0);
+  height: 100svh !important;
+  margin: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+}
+
+a,
+a:hover,
+a:focus {
+  text-decoration: none;
+}
+
+a:hover,
+a:focus {
+  color: initial;
+}
+
+/* Material Icons */
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+/* Material button styles */
+.mat-mdc-button,
+.mat-mdc-raised-button,
+.mat-mdc-flat-button,
+.mat-mdc-stroked-button {
+  border-radius: var(--radius-md) !important;
+  min-height: var(--button-height-md) !important;
+}
+
+.mat-mdc-chip {
+  border-radius: var(--radius-pill) !important;
+}
+
+/* Material form field notch */
+.mdc-notched-outline__notch {
+  border-right: none !important;
+}
+
+/* ===== CDK Overlay ===== */
+
+.cdk-overlay-container {
+  z-index: var(--z-modal);
+}
+
+.cdk-dialog-container {
+  padding: 0;
+}

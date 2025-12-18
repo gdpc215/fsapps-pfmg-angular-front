@@ -5,6 +5,15 @@
     <div class="flex items-center gap-4">
       <a routerLink="/app/home" class="hover:underline">Home</a>
       <a routerLink="/app/about" class="hover:underline">About</a>
+      <a [matMenuTriggerFor]="transactionsMenu" class="hover:underline cursor-pointer">Transactions</a>
+      <mat-menu #transactionsMenu="matMenu">
+        <button mat-menu-item routerLink="/transactions/dashboard">Dashboard</button>
+        <button mat-menu-item routerLink="/transactions/currencies">Currencies</button>
+        <button mat-menu-item routerLink="/transactions/accounts">Accounts</button>
+        <button mat-menu-item routerLink="/transactions/cards">Cards</button>
+        <button mat-menu-item routerLink="/transactions/movements">Movements</button>
+        <button mat-menu-item routerLink="/transactions/categories">Categories</button>
+      </mat-menu>
     </div>
   </div>
 </div>

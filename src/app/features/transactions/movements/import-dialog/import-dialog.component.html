@@ -1,0 +1,72 @@
+<h2 mat-dialog-title>Import Movements</h2>
+
+<mat-dialog-content>
+  <div class="flex flex-col gap-4">
+    <!-- Step 1: Select account/card -->
+    <mat-form-field appearance="outline">
+      <mat-label>Select Account or Card</mat-label>
+      <mat-select [(value)]="selectedEntity" (selectionChange)="onEntitySelect()">
+        <mat-optgroup label="Accounts">
+          <mat-option *ngFor="let account of data.accounts" [value]="{ type: 'account', entity: account }">
+            {{ account.name }}
+          </mat-option>
+        </mat-optgroup>
+        <mat-optgroup label="Cards">
+          <mat-option *ngFor="let card of data.cards" [value]="{ type: 'card', entity: card }">
+            {{ card.name }}
+          </mat-option>
+        </mat-optgroup>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Step 2: Upload file -->
+    <div *ngIf="selectedEntity" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+      <input type="file" #fileInput (change)="onFileSelect($event)" accept=".csv,.xlsx,.xls" class="hidden">
+      <button mat-raised-button color="primary" (click)="fileInput.click()">
+        <mat-icon>cloud_upload</mat-icon> Choose Excel File
+      </button>
+      <p *ngIf="selectedFile" class="mt-2 text-sm text-gray-600">{{ selectedFile.name }}</p>
+    </div>
+
+    <!-- Step 3: Preview -->
+    <div *ngIf="parsedMovements.length > 0" class="mt-4">
+      <h3 class="text-lg font-semibold mb-2">Preview ({{ newMovements.length }} new movements found)</h3>
+      <div class="max-h-96 overflow-auto border rounded">
+        <table mat-table [dataSource]="newMovements" class="w-full">
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef>Date</th>
+            <td mat-cell *matCellDef="let movement">{{ movement.date | date:'short' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let movement">{{ movement.description }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="currency">
+            <th mat-header-cell *matHeaderCellDef>Currency</th>
+            <td mat-cell *matCellDef="let movement">{{ movement.currency }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef class="text-right">Amount</th>
+            <td mat-cell *matCellDef="let movement" class="text-right">
+              {{ movement.amount | number:'1.2-2' }}
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="previewColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: previewColumns;"></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onImport()" 
+          [disabled]="newMovements.length === 0">
+    Import {{ newMovements.length }} Movements
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,63 @@
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold">Categories</h2>
+    <button mat-raised-button color="primary" (click)="openAddCategoryDialog(null)">
+      <mat-icon>add</mat-icon> Add Category
+    </button>
+  </div>
+
+  <div *ngIf="topLevelCategories.length === 0" class="text-center py-12 text-gray-500">
+    <mat-icon class="text-6xl mb-4">category</mat-icon>
+    <p>No categories configured yet. Click "Add Category" to get started.</p>
+  </div>
+
+  <!-- Categories tree -->
+  <div *ngIf="topLevelCategories.length > 0" class="space-y-4">
+    <mat-accordion>
+      <mat-expansion-panel *ngFor="let category of topLevelCategories">
+        <mat-expansion-panel-header>
+          <mat-panel-title class="flex items-center justify-between w-full">
+            <span class="font-semibold">{{ category.name }}</span>
+            <div class="flex gap-2" (click)="$event.stopPropagation()">
+              <button mat-icon-button (click)="openAddCategoryDialog(category.id)" matTooltip="Add subcategory">
+                <mat-icon>add</mat-icon>
+              </button>
+              <button mat-icon-button (click)="openRulesDialog(category)" matTooltip="Manage rules">
+                <mat-icon>rule</mat-icon>
+              </button>
+              <button mat-icon-button (click)="openEditCategoryDialog(category)" matTooltip="Edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button (click)="deleteCategory(category)" matTooltip="Delete" color="warn">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <!-- Subcategories -->
+        <div class="ml-6 space-y-2">
+          <div *ngFor="let subcategory of getSubcategories(category.id)" 
+               class="flex items-center justify-between p-3 bg-gray-50 rounded">
+            <span>{{ subcategory.name }}</span>
+            <div class="flex gap-2">
+              <button mat-icon-button (click)="openRulesDialog(subcategory)" matTooltip="Manage rules">
+                <mat-icon>rule</mat-icon>
+              </button>
+              <button mat-icon-button (click)="openEditCategoryDialog(subcategory)" matTooltip="Edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button (click)="deleteCategory(subcategory)" matTooltip="Delete" color="warn">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="getSubcategories(category.id).length === 0" class="text-sm text-gray-500 italic p-3">
+            No subcategories. Click + to add one.
+          </div>
+        </div>
+      </mat-expansion-panel>
+    </mat-accordion>
+  </div>
+</div>

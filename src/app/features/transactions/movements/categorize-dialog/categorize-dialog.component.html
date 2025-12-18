@@ -1,0 +1,35 @@
+<h2 mat-dialog-title>Categorize Movement</h2>
+
+<mat-dialog-content>
+  <div class="mb-4 p-4 bg-gray-50 rounded">
+    <p class="font-semibold">{{ data.movement.description }}</p>
+    <p class="text-sm text-gray-600">{{ data.movement.date | date:'short' }} • {{ data.movement.currency }} {{ data.movement.amount | number:'1.2-2' }}</p>
+  </div>
+
+  <form [formGroup]="form" class="flex flex-col gap-4">
+    <mat-form-field appearance="outline">
+      <mat-label>Category</mat-label>
+      <mat-select formControlName="categoryId" (selectionChange)="onCategoryChange()">
+        <mat-option [value]="null">None</mat-option>
+        <mat-option *ngFor="let category of data.categories" [value]="category.id">
+          {{ category.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" *ngIf="subcategories.length > 0">
+      <mat-label>Subcategory</mat-label>
+      <mat-select formControlName="subcategoryId">
+        <mat-option [value]="null">None</mat-option>
+        <mat-option *ngFor="let subcategory of subcategories" [value]="subcategory.id">
+          {{ subcategory.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSave()">Save</button>
+</mat-dialog-actions>

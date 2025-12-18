@@ -1,0 +1,52 @@
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold">Accounts</h2>
+    <button mat-raised-button color="primary" (click)="openAddDialog()">
+      <mat-icon>add</mat-icon> Add Account
+    </button>
+  </div>
+
+  <div *ngIf="(accounts$ | async)?.length === 0" class="text-center py-12 text-gray-500">
+    <mat-icon class="text-6xl mb-4">account_balance_wallet</mat-icon>
+    <p>No accounts configured yet. Click "Add Account" to get started.</p>
+  </div>
+
+  <div *ngIf="(accounts$ | async)?.length! > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div *ngFor="let account of accounts$ | async" class="bg-white rounded-lg shadow p-6">
+      <div class="flex justify-between items-start mb-4">
+        <h3 class="text-xl font-semibold">{{ account.name }}</h3>
+        <div class="flex gap-1">
+          <button mat-icon-button (click)="openEditDialog(account)" matTooltip="Edit">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button (click)="deleteAccount(account)" matTooltip="Delete" color="warn">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="space-y-2 mb-4">
+        <div class="flex justify-between">
+          <span class="text-gray-600">Currency:</span>
+          <span class="font-medium">{{ getCurrencyDisplay(account.currencyId) }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Current Balance:</span>
+          <span class="font-medium text-lg">{{ account.currentBalance | number:'1.2-2' }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Last Checkpoint:</span>
+          <span class="font-medium">{{ account.lastCheckpointBalance | number:'1.2-2' }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Checkpoint Date:</span>
+          <span class="text-sm">{{ account.lastCheckpointDate ? (account.lastCheckpointDate | date:'short') : 'Not set' }}</span>
+        </div>
+      </div>
+
+      <button mat-raised-button color="accent" class="w-full" (click)="openCheckpointDialog(account)">
+        <mat-icon>save</mat-icon> Set Checkpoint
+      </button>
+    </div>
+  </div>
+</div>

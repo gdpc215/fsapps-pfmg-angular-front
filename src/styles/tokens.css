@@ -1,0 +1,187 @@
+/**
+ * Eatsy Brand Design Tokens
+ * CSS Custom Properties for consistent theming across the application
+ */
+
+:root {
+  /* ===== Brand Colors ===== */
+
+  /* Primary brand colors */
+  --eatsy-primary: #4b47d1;
+  --eatsy-navy: #050259;
+  --eatsy-lavender: #c9c9f5;
+  --eatsy-green: #39d167;
+
+  --eatsy-white: #ffffff;
+  --eatsy-black: #000000;
+
+  --eatsy-gray-dark: #494949;
+  --eatsy-gray-mid: #717171;
+  --eatsy-gray-dimmed: #c2c2c2;
+  --eatsy-gray-light: #EFEFEF;
+
+  --eatsy-red: #fb2c36;
+  --eatsy-blue-light: #8ec5ff;
+  --eatsy-blue: #4784fa;
+
+  /* Semantic color mappings */
+  --eatsy-primary-hover: #3e3ab3;
+  --eatsy-primary-pressed: #342f99;
+  --eatsy-green-hover: #2db758;
+  --eatsy-green-pressed: #259d4a;
+
+  /* Text colors */
+  --eatsy-text-primary: #050259;
+  --eatsy-text-secondary: #6b6b8c;
+  --eatsy-text-disabled: #b5b5c8;
+  --eatsy-text-on-primary: #ffffff;
+  --eatsy-text-on-accent: #ffffff;
+
+  /* Background colors */
+  --eatsy-bg-primary: #ffffff;
+  --eatsy-bg-secondary: #f8f8fc;
+  --eatsy-bg-surface: #ffffff;
+  --eatsy-bg-overlay: rgba(0, 0, 0, 0.6);
+
+  /* Border colors */
+  --eatsy-border-default: #e5e5ef;
+  --eatsy-border-hover: #c9c9f5;
+  --eatsy-border-focus: #4b47d1;
+
+  /* ===== Typography ===== */
+
+  /* Font families - Only two fonts */
+  --font-heading: 'Gordita', system-ui, -apple-system, sans-serif;
+  --font-body: 'Poppins', system-ui, -apple-system, sans-serif;
+
+  /* Font sizes */
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.875rem; /* 14px */
+  --text-base: 1rem; /* 16px */
+  --text-lg: 1.125rem; /* 18px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: 1.5rem; /* 24px */
+  --text-3xl: 1.875rem; /* 30px */
+  --text-4xl: 2.25rem; /* 36px */
+
+  /* Font weights */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Line heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  /* ===== Spacing ===== */
+
+  --spacing-xs: 0.25rem; /* 4px */
+  --spacing-sm: 0.5rem; /* 8px */
+  --spacing-md: 1rem; /* 16px */
+  --spacing-lg: 1.5rem; /* 24px */
+  --spacing-xl: 2rem; /* 32px */
+  --spacing-2xl: 3rem; /* 48px */
+
+  /* ===== Border Radius ===== */
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+
+  /* ===== Shadows ===== */
+
+  --shadow-xs: 0 1px 2px rgba(5, 2, 89, 0.05);
+  --shadow-sm: 0 2px 4px rgba(5, 2, 89, 0.06);
+  --shadow-md: 0 4px 8px rgba(5, 2, 89, 0.08);
+  --shadow-lg: 0 8px 16px rgba(5, 2, 89, 0.12);
+  --shadow-xl: 0 12px 24px rgba(5, 2, 89, 0.16);
+  --shadow-custom-box: 0px 0px 7px rgba(0, 0, 0, 0.5);
+  --shadow-eatsy-card: 0 2px 8px rgba(5, 2, 89, 0.08);
+  --shadow-eatsy-elevated: 0 4px 16px rgba(5, 2, 89, 0.12);
+
+  /* ===== Focus States ===== */
+
+  --focus-ring-width: 3px;
+  --focus-ring-color: var(--eatsy-primary);
+  --focus-ring-offset: 2px;
+  --focus-ring:
+    0 0 0 var(--focus-ring-offset) var(--eatsy-white),
+    0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-color);
+
+  /* ===== Transitions ===== */
+
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ===== Z-index Layers ===== */
+
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+
+  /* ===== Layout ===== */
+
+  --container-max-width: 1280px;
+  --content-max-width: 900px;
+  --sidebar-width: 280px;
+
+  /* ===== Safe Area (for mobile notches/navigation) ===== */
+
+  --safe-area-inset-top: env(safe-area-inset-top, 0);
+  --safe-area-inset-right: env(safe-area-inset-right, 0);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0);
+  --safe-area-inset-left: env(safe-area-inset-left, 0);
+}
+
+/* ===== Material Design Component Overrides ===== */
+
+:root {
+  /* Material theme color mappings */
+  --mat-app-background-color: var(--eatsy-bg-primary);
+  --mat-app-text-color: var(--eatsy-text-primary);
+  
+  --mdc-theme-primary: var(--eatsy-primary);
+  --mdc-theme-on-primary: var(--eatsy-text-on-primary);
+  --mdc-theme-secondary: var(--eatsy-green);
+  --mdc-theme-on-secondary: var(--eatsy-text-on-accent);
+  --mdc-theme-surface: var(--eatsy-bg-surface);
+  --mdc-theme-on-surface: var(--eatsy-text-primary);
+  --mdc-theme-background: var(--eatsy-bg-secondary);
+
+  /* Toolbar */
+  --mat-toolbar-container-background-color: rgb(209, 209, 209, 1);
+  --mat-toolbar-container-text-color: rgba(0, 0, 0, .87);
+  --mat-toolbar-standard-height: 64px;
+  --mat-toolbar-mobile-height: 56px;
+  --mat-toolbar-title-text-line-height: 32px;
+  --mat-toolbar-title-text-size: 20px;
+  --mat-toolbar-title-text-tracking: .0125em;
+  --mat-toolbar-title-text-weight: 500;
+  --mat-toolbar-title-text-font: var(--font-body);
+
+  /* Sidenav */
+  --mat-sidenav-container-background-color: rgba(240, 240, 240, 1);
+  --mat-sidenav-content-background-color: var(--eatsy-bg-primary);
+  --mat-sidenav-scrim-color: #514e4e5c;
+
+  --mat-option-label-text-font: var(--font-body);
+  --mat-sys-body-medium-font: var(--font-body);
+
+  --mat-bottom-sheet-container-background-color: white;
+
+  /* Form controllers */
+  --mat-form-field-container-height: 40px;
+  --mat-form-field-container-vertical-padding: 8px;
+  --mdc-checkbox-state-layer-size: 30px;
+}

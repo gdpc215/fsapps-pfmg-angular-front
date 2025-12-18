@@ -10,5 +10,11 @@ export class Constants {
   
   public static StorageTags = class {
     public static readonly USER_OBJECT = "USER_OBJECT";
+    public static readonly CURRENCIES = "CURRENCIES";
+    public static readonly ACCOUNTS = "ACCOUNTS";
+    public static readonly CARDS = "CARDS";
+    public static readonly MOVEMENTS = "MOVEMENTS";
+    public static readonly CATEGORIES = "CATEGORIES";
+    public static readonly CATEGORY_RULES = "CATEGORY_RULES";
   }
 }

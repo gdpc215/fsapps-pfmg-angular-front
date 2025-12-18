@@ -12,6 +12,13 @@ const routes: Routes = [
     component: FrameComponent,
     loadChildren: () => import('../features/app/features.module').then(m => m.FeaturesModule)
   },
+
+  // Transactions module
+  {
+    path: routectlg.TRANSACTIONS,
+    component: FrameComponent,
+    loadChildren: () => import('../features/transactions/transactions.module').then(m => m.TransactionsModule)
+  },
 ];
 
 @NgModule({

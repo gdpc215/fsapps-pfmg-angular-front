@@ -1,0 +1,41 @@
+<h2 mat-dialog-title>Auto-Categorization Rules for {{ data.category.name }}</h2>
+
+<mat-dialog-content>
+  <div class="mb-4">
+    <button mat-raised-button color="primary" (click)="addRule()">
+      <mat-icon>add</mat-icon> Add Rule
+    </button>
+  </div>
+
+  <div *ngIf="rules.length === 0" class="text-center py-8 text-gray-500">
+    <p>No rules configured. Click "Add Rule" to create one.</p>
+  </div>
+
+  <div *ngIf="rules.length > 0" class="space-y-3">
+    <div *ngFor="let rule of rules; let i = index" 
+         class="flex items-center gap-3 p-3 bg-gray-50 rounded">
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Rule Type</mat-label>
+        <mat-select [(value)]="rule.ruleType">
+          <mat-option value="exact">Exact Match</mat-option>
+          <mat-option value="startsWith">Starts With</mat-option>
+          <mat-option value="contains">Contains</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="flex-[2]">
+        <mat-label>Pattern</mat-label>
+        <input matInput [(ngModel)]="rule.pattern" placeholder="e.g., UBER">
+      </mat-form-field>
+
+      <button mat-icon-button (click)="removeRule(i)" matTooltip="Delete rule" color="warn">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSave()">Save Rules</button>
+</mat-dialog-actions>

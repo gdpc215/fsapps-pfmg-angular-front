@@ -1,0 +1,79 @@
+<h2 mat-dialog-title>{{ data.account ? 'Edit' : 'Add' }} Account</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="flex flex-col gap-4">
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput formControlName="name" placeholder="Main Checking Account">
+      <mat-error *ngIf="form.get('name')?.hasError('required')">Name is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Account Type</mat-label>
+      <mat-select formControlName="type">
+        <mat-option [value]="AccountType.DEBIT">Debit Account</mat-option>
+        <mat-option [value]="AccountType.CREDIT">Credit Card</mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.get('type')?.hasError('required')">Account type is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ isCredit ? 'Transaction Currency' : 'Currency' }}</mat-label>
+      <mat-select formControlName="currencyId">
+        <mat-option *ngFor="let currency of data.currencies" [value]="currency.id">
+          {{ currency.symbol }} {{ currency.code }} - {{ currency.name }}
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.get('currencyId')?.hasError('required')">Currency is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Current Balance</mat-label>
+      <input matInput type="number" formControlName="currentBalance" placeholder="0.00" step="0.01">
+      <mat-error *ngIf="form.get('currentBalance')?.hasError('required')">Current balance is required</mat-error>
+    </mat-form-field>
+
+    <!-- Credit Card Specific Fields -->
+    <div *ngIf="isCredit" class="credit-fields flex flex-col gap-4">
+      <mat-form-field appearance="outline">
+        <mat-label>Payment Currency</mat-label>
+        <mat-select formControlName="paymentCurrencyId">
+          <mat-option *ngFor="let currency of data.currencies" [value]="currency.id">
+            {{ currency.symbol }} {{ currency.code }} - {{ currency.name }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="form.get('paymentCurrencyId')?.hasError('required')">Payment currency is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Payment Date (Day of Month)</mat-label>
+        <input matInput type="number" formControlName="paymentDate" placeholder="15" min="1" max="31">
+        <mat-hint>Day of the month (1-31) when payment is due</mat-hint>
+        <mat-error *ngIf="form.get('paymentDate')?.hasError('required')">Payment date is required</mat-error>
+        <mat-error *ngIf="form.get('paymentDate')?.hasError('min') || form.get('paymentDate')?.hasError('max')">
+          Payment date must be between 1 and 31
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Billing Date (Day of Month)</mat-label>
+        <input matInput type="number" formControlName="billingDate" placeholder="10" min="1" max="31">
+        <mat-hint>Day when billing cycle closes and interests are calculated</mat-hint>
+        <mat-error *ngIf="form.get('billingDate')?.hasError('required')">Billing date is required</mat-error>
+        <mat-error *ngIf="form.get('billingDate')?.hasError('min') || form.get('billingDate')?.hasError('max')">
+          Billing date must be between 1 and 31
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Credit Limit (Optional)</mat-label>
+        <input matInput type="number" formControlName="creditLimit" placeholder="10000.00" step="0.01">
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSave()" [disabled]="form.invalid">Save</button>
+</mat-dialog-actions>

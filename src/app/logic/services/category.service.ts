@@ -4,6 +4,7 @@ import { Constants } from '../constants';
 import { Category, CategoryRule } from '../types/category';
 import { Utilities } from '../utilities';
 import { BaseService } from './base.service';
+import { DefaultDataService } from './default-data.service';
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService extends BaseService {
@@ -11,7 +12,7 @@ export class CategoryService extends BaseService {
   private categories$ = new BehaviorSubject<Category[]>([]);
   private rules$ = new BehaviorSubject<CategoryRule[]>([]);
 
-  constructor() {
+  constructor(private defaultDataService: DefaultDataService) {
     super('CategoryService');
     this.loadFromCache();
   }
@@ -118,8 +119,16 @@ export class CategoryService extends BaseService {
   private loadFromCache(): void {
     const cachedCategories = this.fetchFromLocalStorage<Category[]>(Constants.StorageTags.CATEGORIES);
     const cachedRules = this.fetchFromLocalStorage<CategoryRule[]>(Constants.StorageTags.CATEGORY_RULES);
-    this.categories$.next(cachedCategories || []);
-    this.rules$.next(cachedRules || []);
+    
+    if (cachedCategories && cachedCategories.length > 0) {
+      this.categories$.next(cachedCategories);
+      this.rules$.next(cachedRules || []);
+    } else {
+      // Initialize with default categories
+      const defaultCategories = this.defaultDataService.getDefaultCategories();
+      this.saveCategoriesCache(defaultCategories);
+      this.rules$.next([]);
+    }
   }
 
   private saveCategoriesCache(categories: Category[]): void {

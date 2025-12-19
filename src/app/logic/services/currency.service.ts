@@ -4,13 +4,14 @@ import { Constants } from '../constants';
 import { Currency } from '../types/currency';
 import { Utilities } from '../utilities';
 import { BaseService } from './base.service';
+import { DefaultDataService } from './default-data.service';
 
 @Injectable({ providedIn: 'root' })
 export class CurrencyService extends BaseService {
 
   private currencies$ = new BehaviorSubject<Currency[]>([]);
 
-  constructor() {
+  constructor(private defaultDataService: DefaultDataService) {
     super('CurrencyService');
     this.loadFromCache();
   }
@@ -43,7 +44,13 @@ export class CurrencyService extends BaseService {
 
   private loadFromCache(): void {
     const cached = this.fetchFromLocalStorage<Currency[]>(Constants.StorageTags.CURRENCIES);
-    this.currencies$.next(cached || []);
+    if (cached && cached.length > 0) {
+      this.currencies$.next(cached);
+    } else {
+      // Initialize with default currencies
+      const defaultCurrencies = this.defaultDataService.getDefaultCurrencies();
+      this.saveToCache(defaultCurrencies);
+    }
   }
 
   private saveToCache(currencies: Currency[]): void {

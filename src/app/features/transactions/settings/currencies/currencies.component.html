@@ -29,6 +29,16 @@
         <td mat-cell *matCellDef="let currency">{{ currency.name }}</td>
       </ng-container>
 
+      <ng-container matColumnDef="conversionRate">
+        <th mat-header-cell *matHeaderCellDef class="font-bold">Rate to PEN</th>
+        <td mat-cell *matCellDef="let currency">
+          <span *ngIf="currency.code === 'PEN'">-</span>
+          <span *ngIf="currency.code !== 'PEN'">
+            1 {{ currency.code }} = {{ currency.conversionRate | number:'1.2-4' }} PEN
+          </span>
+        </td>
+      </ng-container>
+
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef class="font-bold text-right">Actions</th>
         <td mat-cell *matCellDef="let currency" class="text-right">

@@ -1,8 +1,8 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { Card } from '../../../../logic/types/card';
-import { Currency } from '../../../../logic/types/currency';
+import { Card } from '../../../../../logic/types/card';
+import { Currency } from '../../../../../logic/types/currency';
 
 @Component({
   selector: 'app-card-dialog',

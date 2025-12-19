@@ -19,6 +19,14 @@
       <input matInput formControlName="name" placeholder="US Dollar">
       <mat-error *ngIf="form.get('name')?.hasError('required')">Name is required</mat-error>
     </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Conversion Rate to PEN</mat-label>
+      <input matInput type="number" formControlName="conversionRate" placeholder="3.36" step="0.01" min="0.01">
+      <mat-hint>1 {{ form.get('code')?.value || 'Currency' }} = {{ form.get('conversionRate')?.value || 1 }} PEN</mat-hint>
+      <mat-error *ngIf="form.get('conversionRate')?.hasError('required')">Conversion rate is required</mat-error>
+      <mat-error *ngIf="form.get('conversionRate')?.hasError('min')">Conversion rate must be greater than 0</mat-error>
+    </mat-form-field>
   </form>
 </mat-dialog-content>
 

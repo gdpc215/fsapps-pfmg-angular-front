@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { Currency } from '../../../../logic/types/currency';
+import { Currency } from '../../../../../logic/types/currency';
 
 @Component({
   selector: 'app-currency-dialog',
@@ -21,7 +21,8 @@ export class CurrencyDialogComponent implements OnInit {
     this.form = this.fb.group({
       code: [this.data.currency?.code || '', Validators.required],
       symbol: [this.data.currency?.symbol || '', Validators.required],
-      name: [this.data.currency?.name || '', Validators.required]
+      name: [this.data.currency?.name || '', Validators.required],
+      conversionRate: [this.data.currency?.conversionRate || 1, [Validators.required, Validators.min(0.01)]]
     });
   }
 
@@ -34,6 +35,7 @@ export class CurrencyDialogComponent implements OnInit {
       currency.code = this.form.value.code;
       currency.symbol = this.form.value.symbol;
       currency.name = this.form.value.name;
+      currency.conversionRate = this.form.value.conversionRate;
       this.dialogRef.close(currency);
     }
   }

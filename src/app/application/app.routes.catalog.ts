@@ -9,11 +9,14 @@ export const CatalogRoutes = {
   // Transactions module
   TRANSACTIONS: 'transactions',
   TRANSACTIONS_DASHBOARD: 'dashboard',
-  TRANSACTIONS_CURRENCIES: 'currencies',
-  TRANSACTIONS_ACCOUNTS: 'accounts',
-  TRANSACTIONS_CARDS: 'cards',
   TRANSACTIONS_MOVEMENTS: 'movements',
-  TRANSACTIONS_CATEGORIES: 'categories',
+  
+  // Settings pages
+  SETTINGS: 'settings',
+  SETTINGS_CURRENCIES: 'currencies',
+  SETTINGS_ACCOUNTS: 'accounts',
+  SETTINGS_CARDS: 'cards',
+  SETTINGS_CATEGORIES: 'categories',
 
   // NESTED: {
   //   BASE: 'nested',

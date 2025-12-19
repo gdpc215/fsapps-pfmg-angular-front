@@ -42,9 +42,15 @@ export class AccountService extends BaseService {
   }
 
   setCheckpoint(id: string, balance: number): void {
-    const accounts = this.accounts$.value.map(a =>
-      a.id === id ? { ...a, lastCheckpointBalance: balance, lastCheckpointDate: new Date() } : a
-    );
+    const accounts = this.accounts$.value.map(a => {
+      if (a.id === id) {
+        const updated = Object.assign(new Account(), a);
+        updated.lastCheckpointBalance = balance;
+        updated.lastCheckpointDate = new Date();
+        return updated;
+      }
+      return a;
+    });
     this.saveToCache(accounts);
   }
 

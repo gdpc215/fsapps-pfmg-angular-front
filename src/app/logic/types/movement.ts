@@ -1,5 +1,12 @@
+export enum MovementType {
+  EXPENSE = 'EXPENSE',   // Negative amount
+  INCOME = 'INCOME',     // Positive amount
+  TRANSFER = 'TRANSFER'  // Movement between accounts
+}
+
 export class Movement {
   id: string;
+  type: MovementType;
   accountOrCardId: string;
   date: Date;
   description: string;
@@ -9,9 +16,14 @@ export class Movement {
   categoryId: string | null;
   subcategoryId: string | null;
   isStub: boolean; // For auto-generated discrepancy movements
+  
+  // Transfer specific fields
+  linkedMovementId?: string;      // ID of the paired movement in transfer
+  targetAccountOrCardId?: string; // Destination account for transfers
 
   constructor() {
     this.id = "";
+    this.type = MovementType.EXPENSE;
     this.accountOrCardId = "";
     this.date = new Date();
     this.description = "";

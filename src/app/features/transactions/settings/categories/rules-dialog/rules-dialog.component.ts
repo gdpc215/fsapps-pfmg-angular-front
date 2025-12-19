@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { CategoryService } from '../../../../logic/services/category.service';
-import { Category, CategoryRule } from '../../../../logic/types/category';
+import { CategoryService } from '../../../../../logic/services/category.service';
+import { Category, CategoryRule } from '../../../../../logic/types/category';
 
 @Component({
   selector: 'app-rules-dialog',

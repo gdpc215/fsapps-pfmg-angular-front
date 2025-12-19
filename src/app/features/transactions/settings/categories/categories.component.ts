@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { CategoryService } from '../../../logic/services/category.service';
-import { Category } from '../../../logic/types/category';
+import { CategoryService } from '../../../../logic/services/category.service';
+import { Category } from '../../../../logic/types/category';
 import { CategoryDialogComponent } from './category-dialog/category-dialog.component';
 import { RulesDialogComponent } from './rules-dialog/rules-dialog.component';
 

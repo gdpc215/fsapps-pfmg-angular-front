@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
-import { AccountService } from '../../../logic/services/account.service';
-import { CurrencyService } from '../../../logic/services/currency.service';
-import { Account } from '../../../logic/types/account';
-import { Currency } from '../../../logic/types/currency';
+import { AccountService } from '../../../../logic/services/account.service';
+import { CurrencyService } from '../../../../logic/services/currency.service';
+import { Account, AccountType } from '../../../../logic/types/account';
+import { Currency } from '../../../../logic/types/currency';
 import { AccountDialogComponent } from './account-dialog/account-dialog.component';
 import { CheckpointDialogComponent } from './checkpoint-dialog/checkpoint-dialog.component';
 
@@ -16,6 +16,7 @@ import { CheckpointDialogComponent } from './checkpoint-dialog/checkpoint-dialog
 export class AccountsComponent implements OnInit {
   accounts$!: Observable<Account[]>;
   currencies: Currency[] = [];
+  AccountType = AccountType;
 
   constructor(
     private accountService: AccountService,
@@ -33,6 +34,10 @@ export class AccountsComponent implements OnInit {
   getCurrencyDisplay(currencyId: string): string {
     const currency = this.currencies.find(c => c.id === currencyId);
     return currency ? `${currency.symbol} ${currency.code}` : 'Unknown';
+  }
+
+  getAccountTypeLabel(type: AccountType): string {
+    return type === AccountType.DEBIT ? 'Debit Account' : 'Credit Card';
   }
 
   openAddDialog(): void {

@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
-import { CurrencyService } from '../../../logic/services/currency.service';
-import { Currency } from '../../../logic/types/currency';
+import { CurrencyService } from '../../../../logic/services/currency.service';
+import { Currency } from '../../../../logic/types/currency';
 import { CurrencyDialogComponent } from './currency-dialog/currency-dialog.component';
 
 @Component({
@@ -12,7 +12,7 @@ import { CurrencyDialogComponent } from './currency-dialog/currency-dialog.compo
 })
 export class CurrenciesComponent implements OnInit {
   currencies$!: Observable<Currency[]>;
-  displayedColumns = ['code', 'symbol', 'name', 'actions'];
+  displayedColumns = ['code', 'symbol', 'name', 'conversionRate', 'actions'];
 
   constructor(
     private currencyService: CurrencyService,

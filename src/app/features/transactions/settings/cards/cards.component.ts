@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
-import { CardService } from '../../../logic/services/card.service';
-import { CurrencyService } from '../../../logic/services/currency.service';
-import { Card } from '../../../logic/types/card';
-import { Currency } from '../../../logic/types/currency';
+import { CardService } from '../../../../logic/services/card.service';
+import { CurrencyService } from '../../../../logic/services/currency.service';
+import { Card } from '../../../../logic/types/card';
+import { Currency } from '../../../../logic/types/currency';
 import { CheckpointDialogComponent } from '../accounts/checkpoint-dialog/checkpoint-dialog.component';
 import { CardDialogComponent } from './card-dialog/card-dialog.component';
 

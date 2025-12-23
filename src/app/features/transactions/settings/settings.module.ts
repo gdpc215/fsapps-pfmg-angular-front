@@ -5,21 +5,23 @@ import { SharedModule } from '../../../shared/shared.module';
 import { AccountDialogComponent } from './accounts/account-dialog/account-dialog.component';
 import { AccountsComponent } from './accounts/accounts.component';
 import { CheckpointDialogComponent } from './accounts/checkpoint-dialog/checkpoint-dialog.component';
-import { CardDialogComponent } from './cards/card-dialog/card-dialog.component';
-import { CardsComponent } from './cards/cards.component';
 import { CategoriesComponent } from './categories/categories.component';
 import { CategoryDialogComponent } from './categories/category-dialog/category-dialog.component';
 import { RulesDialogComponent } from './categories/rules-dialog/rules-dialog.component';
+import { CategoryRulesComponent } from './category-rules/category-rules.component';
 import { CurrenciesComponent } from './currencies/currencies.component';
 import { CurrencyDialogComponent } from './currencies/currency-dialog/currency-dialog.component';
+import { RecurrentTransactionDialogComponent } from './recurrent-transactions/recurrent-transaction-dialog/recurrent-transaction-dialog.component';
+import { RecurrentTransactionsComponent } from './recurrent-transactions/recurrent-transactions.component';
 import { SettingsComponent } from './settings.component';
 
 const routes: Routes = [
   { path: '', component: SettingsComponent },
   { path: routectlg.SETTINGS_CURRENCIES, component: CurrenciesComponent },
   { path: routectlg.SETTINGS_ACCOUNTS, component: AccountsComponent },
-  { path: routectlg.SETTINGS_CARDS, component: CardsComponent },
-  { path: routectlg.SETTINGS_CATEGORIES, component: CategoriesComponent }
+  { path: routectlg.SETTINGS_CATEGORIES, component: CategoriesComponent },
+  { path: routectlg.SETTINGS_CATEGORY_RULES, component: CategoryRulesComponent },
+  { path: routectlg.SETTINGS_RECURRENT_TRANSACTIONS, component: RecurrentTransactionsComponent }
 ];
 
 @NgModule({
@@ -30,11 +32,12 @@ const routes: Routes = [
     AccountsComponent,
     AccountDialogComponent,
     CheckpointDialogComponent,
-    CardsComponent,
-    CardDialogComponent,
     CategoriesComponent,
     CategoryDialogComponent,
-    RulesDialogComponent
+    RulesDialogComponent,
+    CategoryRulesComponent,
+    RecurrentTransactionsComponent,
+    RecurrentTransactionDialogComponent
   ],
   imports: [
     SharedModule,

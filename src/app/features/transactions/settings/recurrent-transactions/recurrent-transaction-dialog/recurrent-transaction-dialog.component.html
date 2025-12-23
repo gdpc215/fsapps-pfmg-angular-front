@@ -1,0 +1,238 @@
+<h2 mat-dialog-title>{{ data.recurrentTransaction ? 'Edit' : 'Add' }} Recurrent Transaction</h2>
+
+<mat-dialog-content class="min-w-[600px]">
+  <form [formGroup]="form" class="flex flex-col gap-4">
+    
+    <!-- Name and Active Toggle -->
+    <div class="flex gap-3 items-center">
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name" placeholder="e.g., Monthly rent payment">
+        <mat-error *ngIf="form.get('name')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+      
+      <mat-slide-toggle formControlName="active" color="primary">
+        Active
+      </mat-slide-toggle>
+    </div>
+
+    <!-- Execution Mode -->
+    <mat-form-field appearance="outline">
+      <mat-label>Execution Mode</mat-label>
+      <mat-select formControlName="executionMode">
+        <mat-option [value]="ExecutionMode.AUTOMATIC">
+          <div class="flex flex-col">
+            <span class="font-medium">Automatic</span>
+            <span class="text-xs text-gray-600">Tagged automatically when importing movements</span>
+          </div>
+        </mat-option>
+        <mat-option [value]="ExecutionMode.MANUAL">
+          <div class="flex flex-col">
+            <span class="font-medium">Manual</span>
+            <span class="text-xs text-gray-600">Must be executed manually before deadline</span>
+          </div>
+        </mat-option>
+      </mat-select>
+      <mat-hint>How this transaction will be processed</mat-hint>
+    </mat-form-field>
+
+    <!-- Max Days for Manual Execution -->
+    <mat-form-field appearance="outline" *ngIf="form.get('executionMode')?.value === ExecutionMode.MANUAL">
+      <mat-label>Max Days to Execute</mat-label>
+      <input matInput type="number" formControlName="maxDaysToExecute" min="1" max="365">
+      <mat-hint>Number of days after due date to allow execution</mat-hint>
+    </mat-form-field>
+
+    <!-- Movement Type Tabs -->
+    <div class="flex gap-2 mb-4">
+      <button type="button" mat-stroked-button 
+              [class.mat-flat-button]="form.get('type')?.value === MovementType.EXPENSE"
+              [color]="form.get('type')?.value === MovementType.EXPENSE ? 'warn' : ''"
+              class="flex-1"
+              (click)="form.patchValue({type: MovementType.EXPENSE}); onTypeChange()">
+        Expense
+      </button>
+      <button type="button" mat-stroked-button 
+              [class.mat-flat-button]="form.get('type')?.value === MovementType.INCOME"
+              [color]="form.get('type')?.value === MovementType.INCOME ? 'primary' : ''"
+              class="flex-1"
+              (click)="form.patchValue({type: MovementType.INCOME}); onTypeChange()">
+        Income
+      </button>
+      <button type="button" mat-stroked-button 
+              [class.mat-flat-button]="form.get('type')?.value === MovementType.TRANSFER"
+              [color]="form.get('type')?.value === MovementType.TRANSFER ? 'accent' : ''"
+              class="flex-1"
+              (click)="form.patchValue({type: MovementType.TRANSFER}); onTypeChange()">
+        Transfer
+      </button>
+    </div>
+
+    <!-- Transfer Layout -->
+    <div *ngIf="isTransfer" class="flex items-center gap-3">
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>From account</mat-label>
+        <mat-select formControlName="accountOrCardId" (selectionChange)="onAccountChange()">
+          <mat-option *ngFor="let account of data.accounts" [value]="account.id">
+            {{ account.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-icon class="text-gray-400">arrow_forward</mat-icon>
+
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>To account</mat-label>
+        <mat-select formControlName="targetAccountOrCardId">
+          <mat-option *ngFor="let account of availableTargetAccounts" [value]="account.id">
+            {{ account.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Account (for non-transfer) -->
+    <mat-form-field appearance="outline" *ngIf="!isTransfer">
+      <mat-label>Account</mat-label>
+      <mat-select formControlName="accountOrCardId" (selectionChange)="onAccountChange()">
+        <mat-option *ngFor="let account of data.accounts" [value]="account.id">
+          {{ account.name }}
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.get('accountOrCardId')?.hasError('required')">Required</mat-error>
+    </mat-form-field>
+
+    <!-- Amount with Currency -->
+    <div class="flex gap-3">
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Amount</mat-label>
+        <input matInput type="number" formControlName="amount" placeholder="0.00" step="0.01">
+        <mat-error *ngIf="form.get('amount')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-32" *ngIf="availableCurrencies.length <= 1">
+        <mat-label>Currency</mat-label>
+        <input matInput formControlName="currency" placeholder="PEN" readonly>
+        <mat-hint *ngIf="form.get('currency')?.disabled">Account currency</mat-hint>
+        <mat-error *ngIf="form.get('currency')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-32" *ngIf="availableCurrencies.length > 1">
+        <mat-label>Currency</mat-label>
+        <mat-select formControlName="currency">
+          <mat-option *ngFor="let curr of availableCurrencies" [value]="curr">
+            {{ curr }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="form.get('currency')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Recurrence Pattern -->
+    <div class="bg-purple-50 p-4 rounded-lg">
+      <h3 class="text-sm font-semibold mb-3 text-purple-900">Recurrence Pattern</h3>
+      
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Recurrence Type</mat-label>
+        <mat-select formControlName="recurrenceType">
+          <mat-option [value]="RecurrenceType.DAY_OF_MONTH">Specific day of each month</mat-option>
+          <mat-option [value]="RecurrenceType.DAY_OF_YEAR">Specific day of the year</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Day of Month -->
+      <mat-form-field appearance="outline" class="w-full" *ngIf="form.get('recurrenceType')?.value === RecurrenceType.DAY_OF_MONTH">
+        <mat-label>Day of Month</mat-label>
+        <input matInput type="number" formControlName="dayOfMonth" min="1" max="31">
+        <mat-hint>1-31 (e.g., 15 for the 15th of each month)</mat-hint>
+      </mat-form-field>
+
+      <!-- Day of Year -->
+      <div *ngIf="form.get('recurrenceType')?.value === RecurrenceType.DAY_OF_YEAR" class="flex gap-3">
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>Month</mat-label>
+          <mat-select formControlName="month">
+            <mat-option *ngFor="let month of monthNames; let i = index" [value]="i + 1">
+              {{ month }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline" class="w-24">
+          <mat-label>Day</mat-label>
+          <input matInput type="number" formControlName="dayOfYear" min="1" max="31">
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Category -->
+    <mat-form-field appearance="outline" *ngIf="!isTransfer">
+      <mat-label>Category</mat-label>
+      <mat-select formControlName="categoryId" (selectionChange)="onCategoryChange()">
+        <mat-option [value]="null">Choose</mat-option>
+        <mat-option *ngFor="let category of topLevelCategories" [value]="category.id">
+          {{ category.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Subcategory -->
+    <mat-form-field appearance="outline" *ngIf="!isTransfer && subcategories.length > 0">
+      <mat-label>Subcategory</mat-label>
+      <mat-select formControlName="subcategoryId">
+        <mat-option [value]="null">None</mat-option>
+        <mat-option *ngFor="let subcategory of subcategories" [value]="subcategory.id">
+          {{ subcategory.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Labels -->
+    <mat-form-field appearance="outline">
+      <mat-label>Labels</mat-label>
+      <mat-chip-grid #chipGrid formControlName="labels">
+        <mat-chip-row *ngFor="let label of form.get('labels')?.value" 
+                      (removed)="removeLabel(label)">
+          {{ label }}
+          <button matChipRemove>
+            <mat-icon>cancel</mat-icon>
+          </button>
+        </mat-chip-row>
+      </mat-chip-grid>
+      <input placeholder="Add label..."
+             [matChipInputFor]="chipGrid"
+             (matChipInputTokenEnd)="addLabel($event)"/>
+    </mat-form-field>
+
+    <!-- Other details -->
+    <div class="mt-2">
+      <h3 class="text-sm font-semibold mb-3">Other details</h3>
+      
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Description</mat-label>
+        <input matInput formControlName="description" placeholder="Brief description">
+        <mat-error *ngIf="form.get('description')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Note</mat-label>
+        <textarea matInput formControlName="notes" placeholder="Additional notes" rows="2"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Payee</mat-label>
+        <input matInput formControlName="payee" placeholder="Person or business">
+      </mat-form-field>
+    </div>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="center" class="flex flex-col gap-2 p-4">
+  <button mat-flat-button color="primary" (click)="onSave()" [disabled]="form.invalid" class="w-full">
+    {{ data.recurrentTransaction ? 'Update' : 'Create' }} Recurrent Transaction
+  </button>
+  <button mat-button (click)="onCancel()" class="w-full">
+    Cancel
+  </button>
+</mat-dialog-actions>

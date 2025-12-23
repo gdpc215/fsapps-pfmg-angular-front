@@ -1,0 +1,69 @@
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold">Category Rules</h2>
+  </div>
+
+  <div *ngIf="rulesWithCategories.length === 0" class="text-center py-12 text-gray-500">
+    <mat-icon class="text-6xl mb-4">rule</mat-icon>
+    <p>No category rules found. Create rules in the Categories section to automatically categorize movements.</p>
+  </div>
+
+  <div *ngIf="rulesWithCategories.length > 0" class="bg-white rounded-lg shadow overflow-hidden">
+    <table mat-table [dataSource]="rulesWithCategories" class="w-full">
+      
+      <ng-container matColumnDef="pattern">
+        <th mat-header-cell *matHeaderCellDef class="font-bold">Pattern</th>
+        <td mat-cell *matCellDef="let item">
+          <span class="font-mono bg-gray-100 px-2 py-1 rounded">{{ item.rule.pattern }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="ruleType">
+        <th mat-header-cell *matHeaderCellDef class="font-bold">Rule Type</th>
+        <td mat-cell *matCellDef="let item">
+          <mat-chip class="text-xs">{{ getRuleTypeLabel(item.rule.ruleType) }}</mat-chip>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="category">
+        <th mat-header-cell *matHeaderCellDef class="font-bold">Category</th>
+        <td mat-cell *matCellDef="let item">
+          <span *ngIf="item.category" class="flex items-center gap-2">
+            <mat-icon class="text-sm">category</mat-icon>
+            {{ item.category.name }}
+          </span>
+          <span *ngIf="!item.category" class="text-gray-400 italic">Unknown</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="subcategory">
+        <th mat-header-cell *matHeaderCellDef class="font-bold">Subcategory</th>
+        <td mat-cell *matCellDef="let item">
+          <span *ngIf="item.subcategory" class="flex items-center gap-2 text-gray-600">
+            <mat-icon class="text-sm">subdirectory_arrow_right</mat-icon>
+            {{ item.subcategory.name }}
+          </span>
+          <span *ngIf="!item.subcategory" class="text-gray-400">-</span>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50"></tr>
+    </table>
+  </div>
+
+  <div *ngIf="rulesWithCategories.length > 0" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
+    <div class="flex items-start gap-2">
+      <mat-icon class="text-blue-600">info</mat-icon>
+      <div class="flex-1 text-sm text-blue-800">
+        <p class="font-semibold mb-1">How Category Rules Work:</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li><strong>Exact Match:</strong> The description must match the pattern exactly</li>
+          <li><strong>Starts With:</strong> The description must start with the pattern</li>
+          <li><strong>Contains:</strong> The description must contain the pattern anywhere</li>
+        </ul>
+        <p class="mt-2">Rules are automatically applied when importing movements or can be manually triggered from the movements list.</p>
+      </div>
+    </div>
+  </div>
+</div>

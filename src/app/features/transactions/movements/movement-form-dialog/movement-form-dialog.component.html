@@ -1,0 +1,176 @@
+<h2 mat-dialog-title>{{ data.movement ? 'Edit' : 'Add' }} record</h2>
+
+<mat-dialog-content class="min-w-[500px]">
+  <form [formGroup]="form" class="flex flex-col gap-4">
+    
+    <!-- Movement Type Tabs -->
+    <div class="flex gap-2 mb-4">
+      <button type="button" mat-stroked-button 
+              [class.mat-flat-button]="form.get('type')?.value === 'EXPENSE'"
+              [color]="form.get('type')?.value === 'EXPENSE' ? 'warn' : ''"
+              class="flex-1"
+              (click)="form.patchValue({type: 'EXPENSE'}); onTypeChange()">
+        Expense
+      </button>
+      <button type="button" mat-stroked-button 
+              [class.mat-flat-button]="form.get('type')?.value === 'INCOME'"
+              [color]="form.get('type')?.value === 'INCOME' ? 'primary' : ''"
+              class="flex-1"
+              (click)="form.patchValue({type: 'INCOME'}); onTypeChange()">
+        Income
+      </button>
+      <button type="button" mat-stroked-button 
+              [class.mat-flat-button]="form.get('type')?.value === 'TRANSFER'"
+              [color]="form.get('type')?.value === 'TRANSFER' ? 'accent' : ''"
+              class="flex-1"
+              (click)="form.patchValue({type: 'TRANSFER'}); onTypeChange()">
+        Transfer
+      </button>
+    </div>
+
+    <!-- Transfer Layout -->
+    <div *ngIf="isTransfer" class="flex items-center gap-3">
+      <!-- From Account -->
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>From account</mat-label>
+        <mat-select formControlName="accountOrCardId" (selectionChange)="onAccountChange()">
+          <mat-option *ngFor="let account of data.accounts" [value]="account.id">
+            {{ account.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-icon class="text-gray-400">arrow_forward</mat-icon>
+
+      <!-- To Account -->
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>To account</mat-label>
+        <mat-select formControlName="targetAccountOrCardId">
+          <mat-option *ngFor="let account of availableTargetAccounts" [value]="account.id">
+            {{ account.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Amount with Currency -->
+    <div class="flex gap-3">
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Amount</mat-label>
+        <input matInput type="number" formControlName="amount" placeholder="0.00" step="0.01">
+        <mat-error *ngIf="form.get('amount')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+      
+      <!-- Currency: read-only for debit, dropdown for credit -->
+      <mat-form-field appearance="outline" class="w-32" *ngIf="availableCurrencies.length <= 1">
+        <mat-label>Currency</mat-label>
+        <input matInput formControlName="currency" placeholder="PEN" readonly>
+        <mat-hint *ngIf="form.get('currency')?.disabled">Account currency</mat-hint>
+        <mat-error *ngIf="form.get('currency')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-32" *ngIf="availableCurrencies.length > 1">
+        <mat-label>Currency</mat-label>
+        <mat-select formControlName="currency">
+          <mat-option *ngFor="let curr of availableCurrencies" [value]="curr">
+            {{ curr }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="form.get('currency')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Account (for non-transfer) -->
+    <mat-form-field appearance="outline" *ngIf="!isTransfer">
+      <mat-label>Account</mat-label>
+      <mat-select formControlName="accountOrCardId" (selectionChange)="onAccountChange()">
+        <mat-option *ngFor="let account of data.accounts" [value]="account.id">
+          <mat-icon class="mr-2">account_balance_wallet</mat-icon>
+          {{ account.name }}
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.get('accountOrCardId')?.hasError('required')">Required</mat-error>
+    </mat-form-field>
+
+    <!-- Category -->
+    <mat-form-field appearance="outline" *ngIf="!isTransfer">
+      <mat-label>Category</mat-label>
+      <mat-select formControlName="categoryId" (selectionChange)="onCategoryChange()">
+        <mat-option [value]="null">Choose</mat-option>
+        <mat-option *ngFor="let category of topLevelCategories" [value]="category.id">
+          {{ category.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Subcategory -->
+    <mat-form-field appearance="outline" *ngIf="!isTransfer && subcategories.length > 0">
+      <mat-label>Subcategory</mat-label>
+      <mat-select formControlName="subcategoryId">
+        <mat-option [value]="null">None</mat-option>
+        <mat-option *ngFor="let subcategory of subcategories" [value]="subcategory.id">
+          {{ subcategory.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Labels -->
+    <mat-form-field appearance="outline">
+      <mat-label>Labels</mat-label>
+      <mat-chip-grid #chipGrid formControlName="labels">
+        <mat-chip-row *ngFor="let label of form.get('labels')?.value" 
+                      (removed)="removeLabel(label)">
+          {{ label }}
+          <button matChipRemove>
+            <mat-icon>cancel</mat-icon>
+          </button>
+        </mat-chip-row>
+      </mat-chip-grid>
+      <input placeholder="Add label..."
+             [matChipInputFor]="chipGrid"
+             (matChipInputTokenEnd)="addLabel($event)"/>
+    </mat-form-field>
+
+    <!-- Date & Time -->
+    <mat-form-field appearance="outline">
+      <mat-label>Date & Time</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="date">
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+
+    <!-- Other details section -->
+    <div class="mt-4">
+      <h3 class="text-lg font-semibold mb-3">Other details</h3>
+      
+      <!-- Note/Description -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Description</mat-label>
+        <input matInput formControlName="description" placeholder="Brief description">
+        <mat-error *ngIf="form.get('description')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+
+      <!-- Note -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Note</mat-label>
+        <textarea matInput formControlName="notes" placeholder="Describe your record" rows="2"></textarea>
+      </mat-form-field>
+
+      <!-- Payer/Payee -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Payee</mat-label>
+        <input matInput formControlName="payee" placeholder="Person or business">
+      </mat-form-field>
+    </div>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="center" class="flex flex-col gap-2 p-4">
+  <button mat-flat-button color="primary" (click)="onSave()" [disabled]="form.invalid" class="w-full">
+    {{ data.movement ? 'Update' : 'Add' }} record
+  </button>
+  <button mat-button (click)="onCancel()" class="w-full">
+    Cancel
+  </button>
+</mat-dialog-actions>

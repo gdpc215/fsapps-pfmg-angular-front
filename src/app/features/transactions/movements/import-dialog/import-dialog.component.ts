@@ -1,11 +1,22 @@
-import { Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import * as XLSX from 'xlsx';
 import { CategoryService } from '../../../../logic/services/category.service';
 import { MovementService } from '../../../../logic/services/movement.service';
-import { Account } from '../../../../logic/types/account';
-import { Card } from '../../../../logic/types/card';
+import { RecurrentTransactionService } from '../../../../logic/services/recurrent-transaction.service';
+import { Account, AccountType } from '../../../../logic/types/account';
+import { Category } from '../../../../logic/types/category';
+import { Currency } from '../../../../logic/types/currency';
 import { Movement } from '../../../../logic/types/movement';
+
+interface MovementWithExclusion {
+  movement: Movement;
+  excluded: boolean; // true = will be excluded from import (checked)
+  isDuplicate: boolean; // true = detected as duplicate
+  proposedCategoryId: string | null; // Proposed category from rules or recurrences
+  proposedSubcategoryId: string | null; // Proposed subcategory
+  categorySource: 'rule' | 'recurrence' | null; // Where the category came from
+}
 
 @Component({
   selector: 'app-import-dialog',
@@ -13,23 +24,32 @@ import { Movement } from '../../../../logic/types/movement';
   standalone: false
 })
 export class ImportDialogComponent {
-  selectedEntity: { type: 'account' | 'card', entity: Account | Card } | null = null;
+  selectedAccount: Account | null = null;
   selectedFile: File | null = null;
-  parsedMovements: Movement[] = [];
-  newMovements: Movement[] = [];
-  previewColumns = ['date', 'description', 'currency', 'amount'];
+  parsedMovements: MovementWithExclusion[] = [];
+  previewColumns = ['exclude', 'date', 'description', 'currency', 'amount', 'category', 'status'];
+  currencyWarnings: string[] = []; // Track currency validation warnings
+  categories: Category[] = [];
 
   constructor(
     private dialogRef: MatDialogRef<ImportDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { accounts: Account[], cards: Card[] },
+    @Inject(MAT_DIALOG_DATA) public data: { accounts: Account[], currencies: Currency[], categories: Category[] },
     private movementService: MovementService,
-    private categoryService: CategoryService
-  ) {}
+    private categoryService: CategoryService,
+    private recurrentTransactionService: RecurrentTransactionService,
+    private cdr: ChangeDetectorRef
+  ) {
+    // Pre-select first account if available
+    if (this.data.accounts && this.data.accounts.length > 0) {
+      this.selectedAccount = this.data.accounts[0];
+    }
+    this.categories = this.data.categories || [];
+  }
 
-  onEntitySelect(): void {
+  onAccountSelect(): void {
     this.selectedFile = null;
     this.parsedMovements = [];
-    this.newMovements = [];
+    this.currencyWarnings = [];
   }
 
   onFileSelect(event: any): void {
@@ -52,38 +72,92 @@ export class ImportDialogComponent {
       const jsonData = XLSX.utils.sheet_to_json(firstSheet, { raw: false });
       
       this.parsedMovements = this.convertToMovements(jsonData);
-      this.detectNewMovements();
+      this.markDuplicates();
+      
+      // Manually trigger change detection after async operation
+      this.cdr.detectChanges();
     };
     
     reader.readAsArrayBuffer(file);
   }
 
-  convertToMovements(data: any[]): Movement[] {
-    if (!this.selectedEntity) return [];
+  convertToMovements(data: any[]): MovementWithExclusion[] {
+    if (!this.selectedAccount) return [];
 
-    return data.map(row => {
+    this.currencyWarnings = [];
+    
+    // Get the account's currency code
+    const accountCurrency = this.data.currencies.find(c => c.id === this.selectedAccount!.currencyId);
+    const accountCurrencyCode = accountCurrency?.code || '';
+
+    return data.map((row, index) => {
       const movement = new Movement();
-      movement.accountOrCardId = this.selectedEntity!.entity.id;
+      movement.accountOrCardId = this.selectedAccount!.id;
       
       // Try to parse different date formats
       movement.date = this.parseDate(row['Fecha'] || row['Date'] || row['fecha']);
       movement.description = row['Descripcion'] || row['Description'] || row['descripcion'] || '';
-      movement.currency = row['Moneda'] || row['Currency'] || row['moneda'] || '';
+      movement.payee = row['Payee'] || row['Payer'] || row['pagador'] || '';
+      movement.notes = row['Notes'] || row['Notas'] || '';
+      
+      // Get currency from file
+      let importedCurrency = row['Moneda'] || row['Currency'] || row['moneda'] || '';
+      
+      // Currency validation based on account type
+      if (this.selectedAccount!.type === AccountType.DEBIT) {
+        // For debit accounts, force the account's currency
+        if (importedCurrency && importedCurrency !== accountCurrencyCode) {
+          this.currencyWarnings.push(
+            `Row ${index + 2}: Currency ${importedCurrency} changed to ${accountCurrencyCode} (debit account requirement)`
+          );
+        }
+        movement.currency = accountCurrencyCode;
+      } else {
+        // For credit accounts, use imported currency or default to account currency
+        movement.currency = importedCurrency || accountCurrencyCode;
+      }
+      
       movement.amount = parseFloat(row['Monto'] || row['Amount'] || row['monto'] || '0');
       
-      // For accounts, try to get operation number
-      if (this.selectedEntity!.type === 'account') {
-        movement.operationNumber = row['Operation'] || row['Operacion'] || row['operation'] || null;
+      // Set defaults for new fields
+      movement.labels = [];
+      
+      // Try to get operation number
+      movement.operationNumber = row['Operation'] || row['Operacion'] || row['operation'] || null;
+
+      // Determine proposed category
+      let proposedCategoryId: string | null = null;
+      let proposedSubcategoryId: string | null = null;
+      let categorySource: 'rule' | 'recurrence' | null = null;
+
+      // First, check if it matches an automatic recurrent transaction
+      const matchingRecurrence = this.findMatchingRecurrence(movement);
+      if (matchingRecurrence) {
+        proposedCategoryId = matchingRecurrence.categoryId;
+        proposedSubcategoryId = matchingRecurrence.subcategoryId;
+        categorySource = 'recurrence';
+      } else {
+        // If no recurrence match, apply category rules
+        const ruleCategoryId = this.categoryService.applyCategoryRules(movement.description);
+        if (ruleCategoryId) {
+          proposedCategoryId = ruleCategoryId;
+          categorySource = 'rule';
+        }
       }
 
-      // Apply auto-categorization
-      const categoryId = this.categoryService.applyCategoryRules(movement.description);
-      if (categoryId) {
-        movement.categoryId = categoryId;
-      }
+      // Apply the proposed category to the movement
+      movement.categoryId = proposedCategoryId;
+      movement.subcategoryId = proposedSubcategoryId;
 
-      return movement;
-    }).filter(m => m.description); // Filter out empty rows
+      return {
+        movement,
+        excluded: false, // Will be set to true for duplicates in markDuplicates()
+        isDuplicate: false, // Will be set in markDuplicates()
+        proposedCategoryId,
+        proposedSubcategoryId,
+        categorySource
+      };
+    }).filter(m => m.movement.description); // Filter out empty rows
   }
 
   parseDate(dateStr: string): Date {
@@ -106,19 +180,81 @@ export class ImportDialogComponent {
     return new Date(dateStr);
   }
 
-  detectNewMovements(): void {
-    if (!this.selectedEntity) return;
+  markDuplicates(): void {
+    if (!this.selectedAccount) return;
 
-    const hasOperationNumber = this.selectedEntity.type === 'account';
-    this.newMovements = this.movementService.detectNewMovements(
-      this.parsedMovements,
-      hasOperationNumber
-    );
+    const hasOperationNumber = this.parsedMovements.some(m => !!m.movement.operationNumber);
+
+    // Mark each movement as duplicate and auto-exclude duplicates
+    this.parsedMovements.forEach(item => {
+      item.isDuplicate = this.movementService.isDuplicate(item.movement, hasOperationNumber);
+      item.excluded = item.isDuplicate; // Auto-check duplicates for exclusion
+    });
+  }
+
+  findMatchingRecurrence(movement: Movement): any {
+    const automaticRecurrences = this.recurrentTransactionService.getAutomaticTransactions();
+    
+    return automaticRecurrences.find(rt => {
+      // Check if account matches
+      if (rt.accountOrCardId !== movement.accountOrCardId) return false;
+      
+      // Check if amount matches
+      if (Math.abs(rt.amount - movement.amount) > 0.01) return false;
+      
+      // Check if currency matches
+      if (rt.currency !== movement.currency) return false;
+      
+      // Check if description contains the recurrence description (normalized)
+      const normalizeDesc = (desc: string) => desc.replace(/\s+/g, '').toLowerCase();
+      const movementDesc = normalizeDesc(movement.description);
+      const recurrenceDesc = normalizeDesc(rt.description);
+      
+      return movementDesc.includes(recurrenceDesc) || recurrenceDesc.includes(movementDesc);
+    });
+  }
+
+  getCategoryName(categoryId: string | null): string {
+    if (!categoryId) return 'Uncategorized';
+    const category = this.categories.find(c => c.id === categoryId);
+    return category ? category.name : 'Unknown';
+  }
+
+  getCategorySourceLabel(source: 'rule' | 'recurrence' | null): string {
+    if (source === 'rule') return 'From rule';
+    if (source === 'recurrence') return 'From recurrence';
+    return '';
+  }
+
+  toggleExclude(item: MovementWithExclusion): void {
+    item.excluded = !item.excluded;
+  }
+
+  toggleAll(): void {
+    const anyUnchecked = this.parsedMovements.some(m => !m.excluded);
+    this.parsedMovements.forEach(m => m.excluded = anyUnchecked);
+  }
+
+  get movementsToImport(): number {
+    return this.parsedMovements.filter(m => !m.excluded).length;
+  }
+
+  get duplicateCount(): number {
+    return this.parsedMovements.filter(m => m.isDuplicate).length;
   }
 
   onImport(): void {
-    if (this.newMovements.length > 0) {
-      this.movementService.addMovements(this.newMovements);
+    if (!this.selectedAccount) {
+      alert('Please select an account before importing');
+      return;
+    }
+    
+    const movementsToImport = this.parsedMovements
+      .filter(m => !m.excluded)
+      .map(m => m.movement);
+    
+    if (movementsToImport.length > 0) {
+      this.movementService.addMovements(movementsToImport);
       this.dialogRef.close(true);
     }
   }

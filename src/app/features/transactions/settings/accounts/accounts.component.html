@@ -37,8 +37,14 @@
           <span class="font-medium">{{ getCurrencyDisplay(account.currencyId) }}</span>
         </div>
         <div class="flex justify-between">
+          <span class="text-gray-600">Initial Balance:</span>
+          <span class="font-medium">{{ account.initialBalance | number:'1.2-2' }}</span>
+        </div>
+        <div class="flex justify-between">
           <span class="text-gray-600">Current Balance:</span>
-          <span class="font-medium text-lg">{{ account.currentBalance | number:'1.2-2' }}</span>
+          <span class="font-medium text-lg" [class.text-green-600]="account.currentBalance > 0" [class.text-red-600]="account.currentBalance < 0">
+            {{ account.currentBalance | number:'1.2-2' }}
+          </span>
         </div>
         
         <!-- Credit Card Specific Info -->
@@ -71,9 +77,14 @@
         </div>
       </div>
 
-      <button mat-raised-button color="accent" class="w-full" (click)="openCheckpointDialog(account)">
-        <mat-icon>save</mat-icon> Set Checkpoint
-      </button>
+      <div class="flex gap-2">
+        <button mat-raised-button color="accent" class="flex-1" (click)="openCheckpointDialog(account)">
+          <mat-icon>save</mat-icon> Set Checkpoint
+        </button>
+        <button mat-stroked-button color="primary" (click)="recalculateBalance(account)" matTooltip="Recalculate balance from movements">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
     </div>
   </div>
 </div>

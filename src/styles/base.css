@@ -80,3 +80,7 @@ a:focus {
 .cdk-dialog-container {
   padding: 0;
 }
+
+mat-icon {
+  @apply !w-auto !h-auto; 
+}

@@ -3,6 +3,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 import { AccountService } from '../../../../logic/services/account.service';
 import { CurrencyService } from '../../../../logic/services/currency.service';
+import { MovementService } from '../../../../logic/services/movement.service';
 import { Account, AccountType } from '../../../../logic/types/account';
 import { Currency } from '../../../../logic/types/currency';
 import { AccountDialogComponent } from './account-dialog/account-dialog.component';
@@ -20,6 +21,7 @@ export class AccountsComponent implements OnInit {
 
   constructor(
     private accountService: AccountService,
+    private movementService: MovementService,
     private currencyService: CurrencyService,
     private dialog: MatDialog
   ) {}
@@ -83,5 +85,11 @@ export class AccountsComponent implements OnInit {
     if (confirm(`Are you sure you want to delete ${account.name}?`)) {
       this.accountService.deleteAccount(account.id);
     }
+  }
+
+  recalculateBalance(account: Account): void {
+    const movements = this.movementService.getMovementsByAccountOrCard(account.id);
+    const totalAmount = movements.reduce((sum, m) => sum + m.amount, 0);
+    this.accountService.recalculateBalance(account.id, totalAmount);
   }
 }

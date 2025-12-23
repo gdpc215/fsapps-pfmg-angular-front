@@ -16,5 +16,6 @@ export class Constants {
     public static readonly MOVEMENTS = "MOVEMENTS";
     public static readonly CATEGORIES = "CATEGORIES";
     public static readonly CATEGORY_RULES = "CATEGORY_RULES";
+    public static readonly RECURRENT_TRANSACTIONS = "RECURRENT_TRANSACTIONS";
   }
 }

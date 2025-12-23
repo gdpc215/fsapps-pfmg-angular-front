@@ -23,9 +23,10 @@ export class AccountDialogComponent implements OnInit {
   ngOnInit(): void {
     this.form = this.fb.group({
       name: [this.data.account?.name || '', Validators.required],
+      color: [this.data.account?.color || '#ba68c8', Validators.required],
       type: [this.data.account?.type || AccountType.DEBIT, Validators.required],
       currencyId: [this.data.account?.currencyId || '', Validators.required],
-      currentBalance: [this.data.account?.currentBalance || 0, Validators.required],
+      initialBalance: [this.data.account?.initialBalance || 0, Validators.required],
       paymentCurrencyId: [this.data.account?.paymentCurrencyId || ''],
       paymentDate: [this.data.account?.paymentDate || null],
       billingDate: [this.data.account?.billingDate || null],
@@ -74,9 +75,11 @@ export class AccountDialogComponent implements OnInit {
         account.lastCheckpointDate = this.data.account.lastCheckpointDate;
       }
       account.name = this.form.value.name;
+      account.color = this.form.value.color;
       account.type = this.form.value.type;
       account.currencyId = this.form.value.currencyId;
-      account.currentBalance = this.form.value.currentBalance;
+      account.initialBalance = this.form.value.initialBalance;
+      account.currentBalance = this.data.account?.currentBalance || this.form.value.initialBalance;
       
       if (account.type === AccountType.CREDIT) {
         account.paymentCurrencyId = this.form.value.paymentCurrencyId;

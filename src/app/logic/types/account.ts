@@ -7,8 +7,10 @@ export class Account {
   id: string;
   name: string;
   type: AccountType;
+  color: string;                // Color for visual identification
   currencyId: string;
-  currentBalance: number;
+  initialBalance: number;       // Starting balance (editable)
+  currentBalance: number;       // Calculated: initialBalance + sum of movements (read-only)
   lastCheckpointBalance: number;
   lastCheckpointDate: Date | null;
   
@@ -22,7 +24,9 @@ export class Account {
     this.id = "";
     this.name = "";
     this.type = AccountType.DEBIT;
+    this.color = "#ba68c8";      // Default purple color
     this.currencyId = "";
+    this.initialBalance = 0;
     this.currentBalance = 0;
     this.lastCheckpointBalance = 0;
     this.lastCheckpointDate = null;

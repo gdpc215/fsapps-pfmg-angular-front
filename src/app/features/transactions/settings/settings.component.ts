@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { CatalogRoutes } from '../../../application/app.routes.catalog';
+import { Constants } from '../../../logic/constants';
+import { DuplicateDetectionRule } from '../../../logic/services/movement.service';
 
 @Component({
   selector: 'app-settings',
@@ -38,10 +40,31 @@ export class SettingsComponent {
       description: 'Set up automatic recurring payments and income',
       icon: 'event_repeat',
       route: `/${CatalogRoutes.TRANSACTIONS}/${CatalogRoutes.SETTINGS}/${CatalogRoutes.SETTINGS_RECURRENT_TRANSACTIONS}`
+    },
+    {
+      title: 'Duplicate Detection Rules',
+      description: 'Manage rules for detecting duplicate transactions',
+      icon: 'content_copy',
+      route: `/${CatalogRoutes.TRANSACTIONS}/${CatalogRoutes.SETTINGS}/duplicate-detection-rules`
     }
   ];
 
-  constructor(private router: Router) {}
+
+  duplicateDetectionRules: DuplicateDetectionRule[] = [];
+
+  constructor(private router: Router) {
+    this.loadDuplicateDetectionRules();
+  }
+
+  loadDuplicateDetectionRules() {
+    const rules = localStorage.getItem(Constants.StorageTags.DUPLICATE_DETECTION_RULES);
+    this.duplicateDetectionRules = rules ? JSON.parse(rules) : [];
+  }
+
+  saveDuplicateDetectionRules(rules: DuplicateDetectionRule[]) {
+    this.duplicateDetectionRules = rules;
+    localStorage.setItem(Constants.StorageTags.DUPLICATE_DETECTION_RULES, JSON.stringify(rules));
+  }
 
   navigateTo(route: string): void {
     this.router.navigate([route]);

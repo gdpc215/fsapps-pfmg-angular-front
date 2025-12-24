@@ -19,6 +19,7 @@ export const CatalogRoutes = {
   SETTINGS_CATEGORIES: 'categories',
   SETTINGS_CATEGORY_RULES: 'category-rules',
   SETTINGS_RECURRENT_TRANSACTIONS: 'recurrent-transactions',
+  SETTINGS_DUPLICATE_DETECTION_RULES: 'duplicate-detection-rules',
 
   // NESTED: {
   //   BASE: 'nested',

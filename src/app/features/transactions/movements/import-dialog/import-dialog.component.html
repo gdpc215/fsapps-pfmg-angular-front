@@ -31,19 +31,6 @@
 
     <!-- Step 3: Preview -->
     <div *ngIf="parsedMovements.length > 0" class="mt-4">
-      <!-- Currency Warnings -->
-      <div *ngIf="currencyWarnings.length > 0" class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-        <div class="flex items-start gap-2">
-          <mat-icon class="text-yellow-600">warning</mat-icon>
-          <div class="flex-1">
-            <p class="font-semibold text-yellow-800 mb-1">Currency Adjustments:</p>
-            <ul class="text-sm text-yellow-700 list-disc list-inside">
-              <li *ngFor="let warning of currencyWarnings">{{ warning }}</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
       <!-- Duplicate Detection Info -->
       <div *ngIf="duplicateCount > 0" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
         <div class="flex items-start gap-2">

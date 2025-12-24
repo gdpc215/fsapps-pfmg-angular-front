@@ -11,6 +11,8 @@ import { RulesDialogComponent } from './categories/rules-dialog/rules-dialog.com
 import { CategoryRulesComponent } from './category-rules/category-rules.component';
 import { CurrenciesComponent } from './currencies/currencies.component';
 import { CurrencyDialogComponent } from './currencies/currency-dialog/currency-dialog.component';
+import { DuplicateDetectionRulesDialogComponent } from './duplicate-detection-rules/duplicate-detection-rules-dialog/duplicate-detection-rules-dialog.component';
+import { DuplicateDetectionRulesComponent } from './duplicate-detection-rules/duplicate-detection-rules.component';
 import { RecurrentTransactionDialogComponent } from './recurrent-transactions/recurrent-transaction-dialog/recurrent-transaction-dialog.component';
 import { RecurrentTransactionsComponent } from './recurrent-transactions/recurrent-transactions.component';
 import { SettingsComponent } from './settings.component';
@@ -21,7 +23,8 @@ const routes: Routes = [
   { path: routectlg.SETTINGS_ACCOUNTS, component: AccountsComponent },
   { path: routectlg.SETTINGS_CATEGORIES, component: CategoriesComponent },
   { path: routectlg.SETTINGS_CATEGORY_RULES, component: CategoryRulesComponent },
-  { path: routectlg.SETTINGS_RECURRENT_TRANSACTIONS, component: RecurrentTransactionsComponent }
+  { path: routectlg.SETTINGS_RECURRENT_TRANSACTIONS, component: RecurrentTransactionsComponent },
+  { path: routectlg.SETTINGS_DUPLICATE_DETECTION_RULES, component: DuplicateDetectionRulesComponent }
 ];
 
 @NgModule({
@@ -37,7 +40,9 @@ const routes: Routes = [
     RulesDialogComponent,
     CategoryRulesComponent,
     RecurrentTransactionsComponent,
-    RecurrentTransactionDialogComponent
+    RecurrentTransactionDialogComponent,
+    DuplicateDetectionRulesComponent,
+    DuplicateDetectionRulesDialogComponent
   ],
   imports: [
     SharedModule,

@@ -28,7 +28,6 @@ export class ImportDialogComponent {
   selectedFile: File | null = null;
   parsedMovements: MovementWithExclusion[] = [];
   previewColumns = ['exclude', 'date', 'description', 'currency', 'amount', 'category', 'status'];
-  currencyWarnings: string[] = []; // Track currency validation warnings
   categories: Category[] = [];
 
   constructor(
@@ -49,7 +48,6 @@ export class ImportDialogComponent {
   onAccountSelect(): void {
     this.selectedFile = null;
     this.parsedMovements = [];
-    this.currencyWarnings = [];
   }
 
   onFileSelect(event: any): void {
@@ -62,66 +60,92 @@ export class ImportDialogComponent {
 
   parseExcelFile(file: File): void {
     const reader = new FileReader();
-    
+
     reader.onload = (e: any) => {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
-      
+
       // Assume first sheet
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(firstSheet, { raw: false });
-      
+
       this.parsedMovements = this.convertToMovements(jsonData);
       this.markDuplicates();
-      
+
       // Manually trigger change detection after async operation
       this.cdr.detectChanges();
     };
-    
+
     reader.readAsArrayBuffer(file);
   }
 
   convertToMovements(data: any[]): MovementWithExclusion[] {
     if (!this.selectedAccount) return [];
 
-    this.currencyWarnings = [];
-    
     // Get the account's currency code
     const accountCurrency = this.data.currencies.find(c => c.id === this.selectedAccount!.currencyId);
     const accountCurrencyCode = accountCurrency?.code || '';
 
+    // Helper: resolve imported currency string (symbol or code) to a currency code using available currencies
+    const resolveCurrencyCode = (raw: string | undefined): string | null => {
+      if (!raw) return null;
+      const s = (raw || '').toString().trim();
+      if (!s) return null;
+
+      // If it's a common symbol like '$', 'S/', '€', match by symbol first
+      const bySymbol = this.data.currencies.find(c => c.symbol === s);
+      if (bySymbol) return bySymbol.code;
+
+      // If the raw contains a symbol plus code like "$ USD" or "USD $", remove non-letters and try
+      const maybeCode = s.replace(/[^A-Za-z]/g, '').toUpperCase();
+      if (maybeCode.length === 3) {
+        const byCode = this.data.currencies.find(c => c.code.toUpperCase() === maybeCode);
+        if (byCode) return byCode.code;
+      }
+
+      // Try direct match to code (case-insensitive)
+      const direct = this.data.currencies.find(c => c.code.toUpperCase() === s.toUpperCase());
+      if (direct) return direct.code;
+
+      // Last attempt: check if any currency's symbol is contained in the raw string
+      const containsSymbol = this.data.currencies.find(c => s.includes(c.symbol));
+      if (containsSymbol) return containsSymbol.code;
+
+      return null;
+    };
+
     return data.map((row, index) => {
       const movement = new Movement();
       movement.accountOrCardId = this.selectedAccount!.id;
-      
+
       // Try to parse different date formats
       movement.date = this.parseDate(row['Fecha'] || row['Date'] || row['fecha']);
       movement.description = row['Descripcion'] || row['Description'] || row['descripcion'] || '';
       movement.payee = row['Payee'] || row['Payer'] || row['pagador'] || '';
       movement.notes = row['Notes'] || row['Notas'] || '';
-      
-      // Get currency from file
-      let importedCurrency = row['Moneda'] || row['Currency'] || row['moneda'] || '';
-      
+
+      // Get currency from file (may be symbol like "$" or code like "USD")
+      let importedCurrencyRaw = row['Moneda'] || row['Currency'] || row['moneda'] || '';
+      const resolvedCurrency = resolveCurrencyCode(importedCurrencyRaw) || '';
+
       // Currency validation based on account type
       if (this.selectedAccount!.type === AccountType.DEBIT) {
         // For debit accounts, force the account's currency
-        if (importedCurrency && importedCurrency !== accountCurrencyCode) {
-          this.currencyWarnings.push(
-            `Row ${index + 2}: Currency ${importedCurrency} changed to ${accountCurrencyCode} (debit account requirement)`
-          );
-        }
         movement.currency = accountCurrencyCode;
       } else {
-        // For credit accounts, use imported currency or default to account currency
-        movement.currency = importedCurrency || accountCurrencyCode;
+        // For credit accounts, if we resolved a currency code from symbol/code use it, otherwise default to account currency
+        if (resolvedCurrency) {
+          movement.currency = resolvedCurrency;
+        } else {
+          movement.currency = accountCurrencyCode;
+        }
       }
-      
+
       movement.amount = parseFloat(row['Monto'] || row['Amount'] || row['monto'] || '0');
-      
+
       // Set defaults for new fields
       movement.labels = [];
-      
+
       // Try to get operation number
       movement.operationNumber = row['Operation'] || row['Operacion'] || row['operation'] || null;
 
@@ -162,11 +186,11 @@ export class ImportDialogComponent {
 
   parseDate(dateStr: string): Date {
     if (!dateStr) return new Date();
-    
+
     // Try different date formats
     // Format: yyyy-MM-dd or dd/MM/yyyy or MM/dd/yyyy
     const parts = dateStr.split(/[-\/]/);
-    
+
     if (parts.length === 3) {
       // Assume yyyy-MM-dd if first part is 4 digits
       if (parts[0].length === 4) {
@@ -176,7 +200,7 @@ export class ImportDialogComponent {
         return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
       }
     }
-    
+
     return new Date(dateStr);
   }
 
@@ -194,22 +218,22 @@ export class ImportDialogComponent {
 
   findMatchingRecurrence(movement: Movement): any {
     const automaticRecurrences = this.recurrentTransactionService.getAutomaticTransactions();
-    
+
     return automaticRecurrences.find(rt => {
       // Check if account matches
       if (rt.accountOrCardId !== movement.accountOrCardId) return false;
-      
+
       // Check if amount matches
       if (Math.abs(rt.amount - movement.amount) > 0.01) return false;
-      
+
       // Check if currency matches
       if (rt.currency !== movement.currency) return false;
-      
+
       // Check if description contains the recurrence description (normalized)
       const normalizeDesc = (desc: string) => desc.replace(/\s+/g, '').toLowerCase();
       const movementDesc = normalizeDesc(movement.description);
       const recurrenceDesc = normalizeDesc(rt.description);
-      
+
       return movementDesc.includes(recurrenceDesc) || recurrenceDesc.includes(movementDesc);
     });
   }
@@ -248,11 +272,11 @@ export class ImportDialogComponent {
       alert('Please select an account before importing');
       return;
     }
-    
+
     const movementsToImport = this.parsedMovements
       .filter(m => !m.excluded)
       .map(m => m.movement);
-    
+
     if (movementsToImport.length > 0) {
       this.movementService.addMovements(movementsToImport);
       this.dialogRef.close(true);

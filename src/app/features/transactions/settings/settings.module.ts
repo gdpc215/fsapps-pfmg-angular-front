@@ -9,6 +9,7 @@ import { CategoriesComponent } from './categories/categories.component';
 import { CategoryDialogComponent } from './categories/category-dialog/category-dialog.component';
 import { RulesDialogComponent } from './categories/rules-dialog/rules-dialog.component';
 import { CategoryRulesComponent } from './category-rules/category-rules.component';
+import { ClearStorageComponent } from './clear-storage/clear-storage.component';
 import { CurrenciesComponent } from './currencies/currencies.component';
 import { CurrencyDialogComponent } from './currencies/currency-dialog/currency-dialog.component';
 import { DuplicateDetectionRulesDialogComponent } from './duplicate-detection-rules/duplicate-detection-rules-dialog/duplicate-detection-rules-dialog.component';
@@ -24,7 +25,8 @@ const routes: Routes = [
   { path: routectlg.SETTINGS_CATEGORIES, component: CategoriesComponent },
   { path: routectlg.SETTINGS_CATEGORY_RULES, component: CategoryRulesComponent },
   { path: routectlg.SETTINGS_RECURRENT_TRANSACTIONS, component: RecurrentTransactionsComponent },
-  { path: routectlg.SETTINGS_DUPLICATE_DETECTION_RULES, component: DuplicateDetectionRulesComponent }
+  { path: routectlg.SETTINGS_DUPLICATE_DETECTION_RULES, component: DuplicateDetectionRulesComponent },
+  { path: 'clear-storage', component: ClearStorageComponent }
 ];
 
 @NgModule({
@@ -42,7 +44,8 @@ const routes: Routes = [
     RecurrentTransactionsComponent,
     RecurrentTransactionDialogComponent,
     DuplicateDetectionRulesComponent,
-    DuplicateDetectionRulesDialogComponent
+    DuplicateDetectionRulesDialogComponent,
+    ClearStorageComponent
   ],
   imports: [
     SharedModule,

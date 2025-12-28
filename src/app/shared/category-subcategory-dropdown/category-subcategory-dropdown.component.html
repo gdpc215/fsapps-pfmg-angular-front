@@ -1,0 +1,77 @@
+<div class="relative w-full">
+  <div #dropdownTrigger 
+       class="flex items-center justify-between px-3 py-2 border border-gray-300 rounded bg-white cursor-pointer transition-all min-h-[40px] min-w-[230px] hover:border-gray-600 hover:bg-gray-50"
+       (click)="toggleDropdown()">
+    <div class="flex-1 overflow-hidden">
+      <div *ngIf="getSelectedCategoryName()" class="text-xs text-gray-400 leading-tight">{{ getSelectedCategoryName() }}</div>
+      <div class="text-sm leading-tight" [class.mt-0.5]="getSelectedCategoryName()">{{ getSelectedSubcategoryName() }}</div>
+    </div>
+    <mat-icon class="text-gray-600 text-[20px] w-5 h-5 ml-2">{{ isOpen ? 'arrow_drop_up' : 'arrow_drop_down' }}</mat-icon>
+  </div>
+</div>
+
+<!-- Fixed positioned dropdown panel -->
+<div *ngIf="isOpen" 
+     class="fixed bg-white border border-gray-300 rounded shadow-lg z-[9999]"
+     (clickOutside)="closeDropdown()"
+     [style.top]="dropdownPosition.top" 
+     [style.left]="dropdownPosition.left"
+     [style.width]="dropdownPosition.width">
+  <div class="max-h-[400px] overflow-y-auto">
+    <!-- Search bar -->
+    <div class="flex items-center px-3 py-2 border-b border-gray-200 bg-gray-50">
+      <mat-icon class="text-gray-400 text-[20px] w-5 h-5 mr-2">search</mat-icon>
+      <input 
+        #searchInput
+        type="text" 
+        class="flex-1 border-none outline-none bg-transparent text-sm p-1" 
+        placeholder="Search subcategories..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+        (click)="$event.stopPropagation()"
+      />
+    </div>
+
+    <!-- Clear selection option -->
+    <div class="px-3 py-2.5 cursor-pointer flex items-center transition-colors text-gray-600 hover:bg-gray-100" 
+         (click)="selectSubcategory(null)">
+      <mat-icon class="text-lg w-[18px] h-[18px] mr-2">clear</mat-icon>
+      <span>None</span>
+    </div>
+
+    <div class="h-px bg-gray-200 my-1"></div>
+
+    <!-- Categories and subcategories -->
+    <div class="py-1">
+      <div *ngFor="let item of filteredCategories" class="mb-0.5">
+        <div class="flex items-center px-3 py-2.5 cursor-pointer font-semibold text-gray-800 transition-colors hover:bg-gray-100" 
+             (click)="toggleCategory(item.category.id)">
+          <mat-icon class="text-[20px] w-5 h-5 mr-2 text-gray-600">
+            {{ expandedCategories.has(item.category.id) ? 'expand_more' : 'chevron_right' }}
+          </mat-icon>
+          <span class="flex-1 text-sm">{{ item.category.name }}</span>
+          <span class="text-xs text-gray-400 font-normal">({{ item.subcategories.length }})</span>
+        </div>
+
+        <div *ngIf="expandedCategories.has(item.category.id)" class="bg-gray-50 border-l-2 border-gray-300 ml-5">
+          <div 
+            *ngFor="let subcat of item.subcategories"
+            class="flex items-center py-2.5 px-3 pl-6 cursor-pointer transition-colors text-sm text-gray-600 hover:bg-gray-200"
+            [class.bg-blue-50]="selectedSubcategoryId === subcat.id"
+            [class.text-blue-600]="selectedSubcategoryId === subcat.id"
+            [class.font-medium]="selectedSubcategoryId === subcat.id"
+            (click)="selectSubcategory(subcat.id)"
+          >
+            <mat-icon class="text-lg w-[18px] h-[18px] mr-2" *ngIf="selectedSubcategoryId === subcat.id">check</mat-icon>
+            <span class="flex-1">{{ subcat.name }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="filteredCategories.length === 0" class="p-6 text-center text-gray-400">
+        <mat-icon class="text-5xl w-12 h-12 mb-2 opacity-50">search_off</mat-icon>
+        <p class="m-0 text-sm">No subcategories found</p>
+      </div>
+    </div>
+  </div>
+</div>

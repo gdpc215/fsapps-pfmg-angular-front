@@ -145,9 +145,15 @@
       
       <!-- Note/Description -->
       <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Description</mat-label>
-        <input matInput formControlName="description" placeholder="Brief description">
-        <mat-error *ngIf="form.get('description')?.hasError('required')">Required</mat-error>
+        <mat-label>Bank Description</mat-label>
+        <input matInput formControlName="bankDescription" placeholder="Brief description">
+        <mat-error *ngIf="form.get('bankDescription')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+
+      <!-- Additional Info -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Additional Info</mat-label>
+        <textarea matInput formControlName="additionalInfo" placeholder="Your additional information" rows="2"></textarea>
       </mat-form-field>
 
       <!-- Note -->

@@ -10,6 +10,7 @@ export const CatalogRoutes = {
   TRANSACTIONS: 'transactions',
   TRANSACTIONS_DASHBOARD: 'dashboard',
   TRANSACTIONS_MOVEMENTS: 'movements',
+  TRANSACTIONS_MOVEMENTS_IMPORT: 'import',
   TRANSACTIONS_MANUAL_RECURRENTS: 'manual-recurrents',
   
   // Settings pages

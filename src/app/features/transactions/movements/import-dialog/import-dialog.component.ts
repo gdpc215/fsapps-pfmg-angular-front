@@ -120,7 +120,7 @@ export class ImportDialogComponent {
 
       // Try to parse different date formats
       movement.date = this.parseDate(row['Fecha'] || row['Date'] || row['fecha']);
-      movement.description = row['Descripcion'] || row['Description'] || row['descripcion'] || '';
+      movement.bankDescription = row['Descripcion'] || row['Description'] || row['descripcion'] || '';
       movement.payee = row['Payee'] || row['Payer'] || row['pagador'] || '';
       movement.notes = row['Notes'] || row['Notas'] || '';
 
@@ -162,7 +162,7 @@ export class ImportDialogComponent {
         categorySource = 'recurrence';
       } else {
         // If no recurrence match, apply category rules
-        const ruleCategoryId = this.categoryService.applyCategoryRules(movement.description);
+        const ruleCategoryId = this.categoryService.applyCategoryRules(movement.bankDescription);
         if (ruleCategoryId) {
           proposedCategoryId = ruleCategoryId;
           categorySource = 'rule';
@@ -181,7 +181,7 @@ export class ImportDialogComponent {
         proposedSubcategoryId,
         categorySource
       };
-    }).filter(m => m.movement.description); // Filter out empty rows
+    }).filter(m => m.movement.bankDescription); // Filter out empty rows
   }
 
   parseDate(dateStr: string): Date {
@@ -231,7 +231,7 @@ export class ImportDialogComponent {
 
       // Check if description contains the recurrence description (normalized)
       const normalizeDesc = (desc: string) => desc.replace(/\s+/g, '').toLowerCase();
-      const movementDesc = normalizeDesc(movement.description);
+      const movementDesc = normalizeDesc(movement.bankDescription);
       const recurrenceDesc = normalizeDesc(rt.description);
 
       return movementDesc.includes(recurrenceDesc) || recurrenceDesc.includes(movementDesc);

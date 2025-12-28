@@ -132,55 +132,83 @@ export class MovementService extends BaseService {
    *   - Handles description expansion (e.g., "UBER EATS" → "UBER EATS *3122")
    */
   isDuplicate(movement: Movement, hasOperationNumber: boolean): boolean {
+    const result = this.checkDuplicate(movement, hasOperationNumber);
+    return result.status === 'CONFIRMED';
+  }
+
+  /**
+   * Check for duplicates with detailed status
+   * Returns: { status: 'NONE' | 'POTENTIAL' | 'CONFIRMED', duplicateOfId: string | null }
+   */
+  checkDuplicate(movement: Movement, hasOperationNumber: boolean): { status: 'NONE' | 'POTENTIAL' | 'CONFIRMED', duplicateOfId: string | null } {
     const existing = this.movements$.value;
     const rules = this.getDuplicateDetectionRules();
 
     if (hasOperationNumber && movement.operationNumber) {
       // Account movement - check by operation number
-      return existing.some(e =>
+      const duplicate = existing.find(e =>
         e.operationNumber === movement.operationNumber &&
         e.accountOrCardId === movement.accountOrCardId
       );
+      return duplicate 
+        ? { status: 'CONFIRMED', duplicateOfId: duplicate.id }
+        : { status: 'NONE', duplicateOfId: null };
     } else {
       // Credit card movement - use smart comparison
       const importedDate = new Date(movement.date);
       const isNonPEN = movement.currency !== 'PEN';
       const accountType = this.getAccountType(movement);
-      const importedDescNorm = this.normalize(movement.description);
+      const importedDescNorm = this.normalize(movement.bankDescription);
 
-      // First, run the normal/fast matching flow (no rules): equality/contains checks
-      const found = existing.some(e => {
-        // Only compare movements from the same account
+      // First, check for exact or contained description matches
+      const exactMatch = existing.find(e => {
         if (e.accountOrCardId !== movement.accountOrCardId) return false;
-
-        // Must have same currency and amount
         if (e.currency !== movement.currency || e.amount !== movement.amount) return false;
 
         const existingDate = new Date(e.date);
-
-        // Check date match
         let dateMatches = existingDate.toDateString() === importedDate.toDateString();
 
-        // For non-PEN currencies, also check within ±3 days
         if (!dateMatches && isNonPEN) {
           const daysDiff = Math.abs(Math.floor((importedDate.getTime() - existingDate.getTime()) / (1000 * 60 * 60 * 24)));
           dateMatches = daysDiff <= 3;
         }
         if (!dateMatches) return false;
 
-        // Check for description equivalence using rules that apply to the imported movement
-        const existingDescNorm = this.normalize(e.description);
+        const existingDescNorm = this.normalize(e.bankDescription);
 
-        // Fast path: direct equality or containment checks (handles most cases)
+        // Exact match or strong containment
         if (existingDescNorm === importedDescNorm) return true;
         if (existingDescNorm.includes(importedDescNorm) || importedDescNorm.includes(existingDescNorm)) return true;
 
         return false;
       });
 
-      if (found) return true;
+      if (exactMatch) {
+        return { status: 'CONFIRMED', duplicateOfId: exactMatch.id };
+      }
 
-      // Last resort: apply duplicate-detection rules ONLY if the imported description appears in any rule group
+      // Check for potential duplicates (same amount, date, currency but description differs)
+      const potentialMatch = existing.find(e => {
+        if (e.accountOrCardId !== movement.accountOrCardId) return false;
+        if (e.currency !== movement.currency || e.amount !== movement.amount) return false;
+
+        const existingDate = new Date(e.date);
+        let dateMatches = existingDate.toDateString() === importedDate.toDateString();
+
+        if (!dateMatches && isNonPEN) {
+          const daysDiff = Math.abs(Math.floor((importedDate.getTime() - existingDate.getTime()) / (1000 * 60 * 60 * 24)));
+          dateMatches = daysDiff <= 3;
+        }
+        
+        // Date, amount, currency match but description is different
+        return dateMatches;
+      });
+
+      if (potentialMatch) {
+        return { status: 'POTENTIAL', duplicateOfId: potentialMatch.id };
+      }
+
+      // Last resort: apply duplicate-detection rules
       const importedDescNormForRules = importedDescNorm;
       const matchedRules = rules.filter(rule => {
         if (rule.accountType !== 'all' && rule.accountType !== accountType) return false;
@@ -189,10 +217,12 @@ export class MovementService extends BaseService {
         return normalizedGroup.includes(importedDescNormForRules);
       });
 
-      if (matchedRules.length === 0) return false;
+      if (matchedRules.length === 0) {
+        return { status: 'NONE', duplicateOfId: null };
+      }
 
       // Check existing movements against matched rule groups
-      return existing.some(e => {
+      const ruleMatch = existing.find(e => {
         if (e.accountOrCardId !== movement.accountOrCardId) return false;
         if (e.currency !== movement.currency || e.amount !== movement.amount) return false;
 
@@ -204,9 +234,8 @@ export class MovementService extends BaseService {
         }
         if (!dateMatches) return false;
 
-        const existingDescNorm = this.normalize(e.description);
+        const existingDescNorm = this.normalize(e.bankDescription);
 
-        // For each matched rule, check group membership/containment
         for (const rule of matchedRules) {
           const normalizedGroup = rule.descriptionGroup.map(d => this.normalize(d));
           if (normalizedGroup.includes(existingDescNorm)) return true;
@@ -215,6 +244,10 @@ export class MovementService extends BaseService {
 
         return false;
       });
+
+      return ruleMatch
+        ? { status: 'CONFIRMED', duplicateOfId: ruleMatch.id }
+        : { status: 'NONE', duplicateOfId: null };
     }
   }
 
@@ -251,5 +284,14 @@ export class MovementService extends BaseService {
   private saveToCache(movements: Movement[]): void {
     this.storeInLocalStorage(movements, Constants.StorageTags.MOVEMENTS);
     this.movements$.next(movements);
+  }
+
+  // Call this in your app to initialize default detection rules if none exist
+  initializeDefaultDetectionRules(defaultDataService: any): void {
+    const rules = this.fetchFromLocalStorage<DuplicateDetectionRule[]>(Constants.StorageTags.DUPLICATE_DETECTION_RULES);
+    if (!rules || rules.length === 0) {
+      const defaultRules = defaultDataService.getDefaultDetectionRules();
+      this.storeInLocalStorage(defaultRules, Constants.StorageTags.DUPLICATE_DETECTION_RULES);
+    }
   }
 }

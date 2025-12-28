@@ -48,7 +48,8 @@ export class MovementFormDialogComponent implements OnInit {
       date: [movement?.date || new Date(), Validators.required],
       accountOrCardId: [movement?.accountOrCardId || '', Validators.required],
       targetAccountOrCardId: [movement?.targetAccountOrCardId || null],
-      description: [movement?.description || '', Validators.required],
+      bankDescription: [movement?.bankDescription || '', Validators.required],
+      additionalInfo: [movement?.additionalInfo || ''],
       payee: [movement?.payee || ''],
       notes: [movement?.notes || ''],
       labels: [movement?.labels || []],
@@ -193,7 +194,8 @@ export class MovementFormDialogComponent implements OnInit {
       movement.type = this.form.value.type;
       movement.accountOrCardId = this.form.value.accountOrCardId;
       movement.date = this.form.value.date;
-      movement.description = this.form.value.description;
+      movement.bankDescription = this.form.value.bankDescription;
+      movement.additionalInfo = this.form.value.additionalInfo;
       movement.payee = this.form.value.payee;
       movement.notes = this.form.value.notes;
       movement.labels = this.form.value.labels;

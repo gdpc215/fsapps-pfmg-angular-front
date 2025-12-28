@@ -119,7 +119,7 @@ export class CategoryService extends BaseService {
   private loadFromCache(): void {
     const cachedCategories = this.fetchFromLocalStorage<Category[]>(Constants.StorageTags.CATEGORIES);
     const cachedRules = this.fetchFromLocalStorage<CategoryRule[]>(Constants.StorageTags.CATEGORY_RULES);
-    
+
     if (cachedCategories && cachedCategories.length > 0) {
       this.categories$.next(cachedCategories);
       this.rules$.next(cachedRules || []);
@@ -127,7 +127,19 @@ export class CategoryService extends BaseService {
       // Initialize with default categories
       const defaultCategories = this.defaultDataService.getDefaultCategories();
       this.saveCategoriesCache(defaultCategories);
-      this.rules$.next([]);
+
+      // Add default subcategory rules
+      const defaultSubcatRules = this.defaultDataService.getDefaultSubcategoryRules(defaultCategories);
+      const rules = defaultSubcatRules.map(rule => {
+        const r = new CategoryRule();
+        r.id = Utilities.generateUUID();
+        r.categoryId = rule.subcategoryId;
+        r.ruleType = rule.ruleType;
+        r.pattern = rule.pattern;
+        return r;
+      });
+      this.rules$.next(rules);
+      this.saveRulesCache(rules);
     }
   }
 

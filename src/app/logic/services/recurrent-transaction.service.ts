@@ -164,7 +164,7 @@ export class RecurrentTransactionService extends BaseService {
     movement.accountOrCardId = recurrentTransaction.accountOrCardId;
     movement.date = new Date();
     movement.payee = recurrentTransaction.payee;
-    movement.description = recurrentTransaction.description;
+    movement.bankDescription = recurrentTransaction.description;
     movement.notes = recurrentTransaction.notes;
     movement.currency = recurrentTransaction.currency;
     movement.amount = recurrentTransaction.amount;

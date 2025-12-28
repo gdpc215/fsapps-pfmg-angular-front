@@ -11,7 +11,6 @@ import { Category } from '../../../logic/types/category';
 import { Currency } from '../../../logic/types/currency';
 import { Movement } from '../../../logic/types/movement';
 import { CategorizeDialogComponent } from './categorize-dialog/categorize-dialog.component';
-import { ImportDialogComponent } from './import-dialog/import-dialog.component';
 import { MovementFormDialogComponent } from './movement-form-dialog/movement-form-dialog.component';
 
 @Component({
@@ -27,7 +26,7 @@ export class MovementsComponent implements OnInit {
   categories: Category[] = [];
   topLevelCategories: Category[] = [];
 
-  displayedColumns = ['date', 'payee', 'description', 'currency', 'amount', 'category', 'actions'];
+  displayedColumns = ['date', 'payee', 'category', 'description', 'currency', 'amount', 'actions'];
 
   // Filters
   selectedAccount: string | null = null;
@@ -74,8 +73,8 @@ export class MovementsComponent implements OnInit {
       filtered = filtered.filter(m => m.accountOrCardId === this.selectedAccount);
     }
 
-    if (this.selectedCategory) {
-      filtered = filtered.filter(m => m.accountOrCardId === this.selectedAccount)
+    if (this.selectedCategory === 'uncategorized') {
+      filtered = filtered.filter(m => !m.categoryId);
     } else if (this.selectedCategory) {
       filtered = filtered.filter(m => m.categoryId === this.selectedCategory);
     }
@@ -137,18 +136,7 @@ export class MovementsComponent implements OnInit {
   }
 
   openImportDialog(): void {
-    const dialogRef = this.dialog.open(ImportDialogComponent, {
-      width: '800px',
-      maxHeight: '90vh',
-      data: { accounts: this.accounts, currencies: this.currencies, categories: this.categories }
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        // Result is already added by the import dialog
-        this.filterMovements();
-      }
-    });
+    this.router.navigate([`/${CatalogRoutes.TRANSACTIONS}/${CatalogRoutes.TRANSACTIONS_MOVEMENTS}/${CatalogRoutes.TRANSACTIONS_MOVEMENTS_IMPORT}`]);
   }
 
   categorizeMovement(movement: Movement): void {

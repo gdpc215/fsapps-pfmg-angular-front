@@ -42,6 +42,12 @@ export class SettingsComponent {
       route: `/${CatalogRoutes.TRANSACTIONS}/${CatalogRoutes.SETTINGS}/${CatalogRoutes.SETTINGS_RECURRENT_TRANSACTIONS}`
     },
     {
+      title: 'Clear Storages',
+      description: 'Erase all or specific app data from local storage',
+      icon: 'delete_forever',
+      route: '/transactions/settings/clear-storage'
+    },
+    {
       title: 'Duplicate Detection Rules',
       description: 'Manage rules for detecting duplicate transactions',
       icon: 'content_copy',

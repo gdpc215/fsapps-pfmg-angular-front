@@ -10,7 +10,8 @@ export class Movement {
   accountOrCardId: string;
   date: Date;
   payee: string;          // Payer/Payee name
-  description: string;    // Short description/title
+  bankDescription: string;    // Short description/title from bank
+  additionalInfo: string; // User's additional information about the movement
   notes: string;          // Additional notes/details
   currency: string;
   amount: number;
@@ -30,7 +31,8 @@ export class Movement {
     this.accountOrCardId = "";
     this.date = new Date();
     this.payee = "";
-    this.description = "";
+    this.bankDescription = "";
+    this.additionalInfo = "";
     this.notes = "";
     this.currency = "";
     this.amount = 0;

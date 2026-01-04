@@ -30,6 +30,7 @@ export class ImportPageComponent implements OnInit {
   previewColumns = ['exclude', 'date', 'description', 'payee', 'subcategory', 'amount', 'actions'];
 
   currencyWarnings: string[] = [];
+  isRecentMovementsExpanded = false;
 
   movements: Movement[] = [];
 
@@ -46,11 +47,21 @@ export class ImportPageComponent implements OnInit {
   ngOnInit(): void {
     this.accountService.getAccounts().subscribe(a => {
       this.accounts = a;
-      if (this.accounts.length > 0 && !this.selectedAccount) this.selectedAccount = this.accounts[0];
+      if (this.accounts.length > 0 && !this.selectedAccount) {
+        this.selectedAccount = this.accounts[0];
+        this.loadMovementsForAccount();
+      }
     });
     this.currencyService.getCurrencies().subscribe(c => this.currencies = c);
     this.categoryService.getCategories().subscribe(c => this.categories = c);
-    this.movementService.getMovements().subscribe(m => this.movements = m);
+  }
+
+  loadMovementsForAccount(): void {
+    if (this.selectedAccount) {
+      this.movements = this.movementService.getMovementsByAccountOrCard(this.selectedAccount.id);
+    } else {
+      this.movements = [];
+    }
   }
 
   get movementsForSelectedAccount(): Movement[] {
@@ -75,6 +86,7 @@ export class ImportPageComponent implements OnInit {
     this.selectedFile = null;
     this.parsedMovements = [];
     this.currencyWarnings = [];
+    this.loadMovementsForAccount();
   }
 
   onFileSelect(event: any): void {
@@ -237,7 +249,7 @@ export class ImportPageComponent implements OnInit {
       } else if (duplicateCheck.status === 'POTENTIAL') {
         item.duplicityStatus = DuplicityStatus.POTENTIAL;
         item.duplicateOfId = duplicateCheck.duplicateOfId;
-        item.excluded = false; // Don't auto-exclude potential duplicates
+        item.excluded = true; // Check by default but allow user to uncheck
       } else {
         item.duplicityStatus = DuplicityStatus.NONE;
         item.duplicateOfId = null;
@@ -361,5 +373,9 @@ export class ImportPageComponent implements OnInit {
     if (!subcategoryId) return '';
     const subcategory = this.categories.find(c => c.id === subcategoryId);
     return subcategory ? subcategory.name : '';
+  }
+
+  toggleRecentMovements(): void {
+    this.isRecentMovementsExpanded = !this.isRecentMovementsExpanded;
   }
 }

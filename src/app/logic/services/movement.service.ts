@@ -13,10 +13,20 @@ export interface DuplicateDetectionRule {
   currencies: string[]; // e.g., ['PEN', 'USD'] or ['all']
 }
 
+// Account-based movements structure
+export interface AccountMovements {
+  accountId: string;
+  movements: Movement[];
+}
+
+export interface MovementsByAccount {
+  [accountId: string]: Movement[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class MovementService extends BaseService {
 
-  private movements$ = new BehaviorSubject<Movement[]>([]);
+  private movementsByAccount$ = new BehaviorSubject<MovementsByAccount>({});
 
   // Fetch duplicate detection rules from settings/local storage
   private getDuplicateDetectionRules(): DuplicateDetectionRule[] {
@@ -31,25 +41,42 @@ export class MovementService extends BaseService {
     this.loadFromCache();
   }
 
-  getMovements(): Observable<Movement[]> {
-    return this.movements$.asObservable();
+  getMovementsByAccountOrCard(accountOrCardId: string): Movement[] {
+    return this.movementsByAccount$.value[accountOrCardId] || [];
   }
 
-  getMovementsByAccountOrCard(accountOrCardId: string): Movement[] {
-    return this.movements$.value.filter(m => m.accountOrCardId === accountOrCardId);
+  getMovementsByAccountMap(): Observable<MovementsByAccount> {
+    return this.movementsByAccount$.asObservable();
   }
 
   addMovement(movement: Movement): void {
     movement.id = Utilities.generateUUID();
-    const movements = [...this.movements$.value, movement];
-    this.saveToCache(movements);
+    const byAccount = { ...this.movementsByAccount$.value };
+    const accountId = movement.accountOrCardId;
+    
+    if (!byAccount[accountId]) {
+      byAccount[accountId] = [];
+    }
+    
+    byAccount[accountId] = [...byAccount[accountId], movement];
+    this.saveToCache(byAccount);
     this.updateAccountBalances(movement, 'add');
   }
 
   addMovements(movements: Movement[]): void {
     const newMovements = movements.map(m => ({ ...m, id: Utilities.generateUUID() }));
-    const allMovements = [...this.movements$.value, ...newMovements];
-    this.saveToCache(allMovements);
+    const byAccount = { ...this.movementsByAccount$.value };
+    
+    // Group new movements by account and add them
+    newMovements.forEach(movement => {
+      const accountId = movement.accountOrCardId;
+      if (!byAccount[accountId]) {
+        byAccount[accountId] = [];
+      }
+      byAccount[accountId] = [...byAccount[accountId], movement];
+    });
+    
+    this.saveToCache(byAccount);
 
     // Calculate total balance changes per account
     const balanceChanges = new Map<string, number>();
@@ -73,13 +100,40 @@ export class MovementService extends BaseService {
   }
 
   updateMovement(movement: Movement): void {
+    const byAccount = { ...this.movementsByAccount$.value };
+    const accountId = movement.accountOrCardId;
+    
     // Find the old movement to calculate balance difference
-    const oldMovement = this.movements$.value.find(m => m.id === movement.id);
-
-    const movements = this.movements$.value.map(m =>
+    let oldMovement: Movement | undefined;
+    
+    // Search in all accounts for the old movement
+    for (const accId in byAccount) {
+      const found = byAccount[accId].find(m => m.id === movement.id);
+      if (found) {
+        oldMovement = found;
+        // Remove from old account if account changed
+        if (accId !== accountId) {
+          byAccount[accId] = byAccount[accId].filter(m => m.id !== movement.id);
+        }
+        break;
+      }
+    }
+    
+    // Update or add to target account
+    if (!byAccount[accountId]) {
+      byAccount[accountId] = [];
+    }
+    
+    byAccount[accountId] = byAccount[accountId].map(m =>
       m.id === movement.id ? movement : m
     );
-    this.saveToCache(movements);
+    
+    // If movement wasn't in this account before, add it
+    if (oldMovement && oldMovement.accountOrCardId !== accountId) {
+      byAccount[accountId] = [...byAccount[accountId], movement];
+    }
+    
+    this.saveToCache(byAccount);
 
     // Reverse old movement and apply new one
     if (oldMovement) {
@@ -89,9 +143,20 @@ export class MovementService extends BaseService {
   }
 
   deleteMovement(id: string): void {
-    const movement = this.movements$.value.find(m => m.id === id);
-    const movements = this.movements$.value.filter(m => m.id !== id);
-    this.saveToCache(movements);
+    const byAccount = { ...this.movementsByAccount$.value };
+    let movement: Movement | undefined;
+    
+    // Search in all accounts for the movement to delete
+    for (const accountId in byAccount) {
+      const found = byAccount[accountId].find(m => m.id === id);
+      if (found) {
+        movement = found;
+        byAccount[accountId] = byAccount[accountId].filter(m => m.id !== id);
+        break;
+      }
+    }
+    
+    this.saveToCache(byAccount);
 
     // Reverse the movement's balance effect
     if (movement) {
@@ -100,14 +165,24 @@ export class MovementService extends BaseService {
   }
 
   categorizeMovement(id: string, categoryId: string | null, subcategoryId: string | null): void {
-    const movements = this.movements$.value.map(m =>
-      m.id === id ? { ...m, categoryId, subcategoryId } : m
-    );
-    this.saveToCache(movements);
+    const byAccount = { ...this.movementsByAccount$.value };
+    
+    // Search in all accounts for the movement to categorize
+    for (const accountId in byAccount) {
+      const index = byAccount[accountId].findIndex(m => m.id === id);
+      if (index !== -1) {
+        byAccount[accountId] = byAccount[accountId].map(m =>
+          m.id === id ? { ...m, categoryId, subcategoryId } : m
+        );
+        break;
+      }
+    }
+    
+    this.saveToCache(byAccount);
   }
 
   deleteAll(): void {
-    this.saveToCache([]);
+    this.saveToCache({});
   }
 
 
@@ -141,14 +216,13 @@ export class MovementService extends BaseService {
    * Returns: { status: 'NONE' | 'POTENTIAL' | 'CONFIRMED', duplicateOfId: string | null }
    */
   checkDuplicate(movement: Movement, hasOperationNumber: boolean): { status: 'NONE' | 'POTENTIAL' | 'CONFIRMED', duplicateOfId: string | null } {
-    const existing = this.movements$.value;
+    const accountMovements = this.movementsByAccount$.value[movement.accountOrCardId] || [];
     const rules = this.getDuplicateDetectionRules();
 
     if (hasOperationNumber && movement.operationNumber) {
       // Account movement - check by operation number
-      const duplicate = existing.find(e =>
-        e.operationNumber === movement.operationNumber &&
-        e.accountOrCardId === movement.accountOrCardId
+      const duplicate = accountMovements.find(e =>
+        e.operationNumber === movement.operationNumber
       );
       return duplicate 
         ? { status: 'CONFIRMED', duplicateOfId: duplicate.id }
@@ -161,8 +235,7 @@ export class MovementService extends BaseService {
       const importedDescNorm = this.normalize(movement.bankDescription);
 
       // First, check for exact or contained description matches
-      const exactMatch = existing.find(e => {
-        if (e.accountOrCardId !== movement.accountOrCardId) return false;
+      const exactMatch = accountMovements.find(e => {
         if (e.currency !== movement.currency || e.amount !== movement.amount) return false;
 
         const existingDate = new Date(e.date);
@@ -188,8 +261,7 @@ export class MovementService extends BaseService {
       }
 
       // Check for potential duplicates (same amount, date, currency but description differs)
-      const potentialMatch = existing.find(e => {
-        if (e.accountOrCardId !== movement.accountOrCardId) return false;
+      const potentialMatch = accountMovements.find(e => {
         if (e.currency !== movement.currency || e.amount !== movement.amount) return false;
 
         const existingDate = new Date(e.date);
@@ -222,8 +294,7 @@ export class MovementService extends BaseService {
       }
 
       // Check existing movements against matched rule groups
-      const ruleMatch = existing.find(e => {
-        if (e.accountOrCardId !== movement.accountOrCardId) return false;
+      const ruleMatch = accountMovements.find(e => {
         if (e.currency !== movement.currency || e.amount !== movement.amount) return false;
 
         const existingDate = new Date(e.date);
@@ -272,18 +343,26 @@ export class MovementService extends BaseService {
   }
 
   private loadFromCache(): void {
-    const cached = this.fetchFromLocalStorage<Movement[]>(Constants.StorageTags.MOVEMENTS);
-    // Parse dates from string format
-    const movements = (cached || []).map(m => ({
-      ...m,
-      date: new Date(m.date)
-    }));
-    this.movements$.next(movements);
+    const cachedByAccount = this.fetchFromLocalStorage<MovementsByAccount>(Constants.StorageTags.MOVEMENTS_BY_ACCOUNT);
+    
+    if (cachedByAccount) {
+      // Parse dates from string format
+      const parsedByAccount: MovementsByAccount = {};
+      Object.keys(cachedByAccount).forEach(accountId => {
+        parsedByAccount[accountId] = cachedByAccount[accountId].map(m => ({
+          ...m,
+          date: new Date(m.date)
+        }));
+      });
+      this.movementsByAccount$.next(parsedByAccount);
+    } else {
+      this.movementsByAccount$.next({});
+    }
   }
 
-  private saveToCache(movements: Movement[]): void {
-    this.storeInLocalStorage(movements, Constants.StorageTags.MOVEMENTS);
-    this.movements$.next(movements);
+  private saveToCache(byAccount: MovementsByAccount): void {
+    this.storeInLocalStorage(byAccount, Constants.StorageTags.MOVEMENTS_BY_ACCOUNT);
+    this.movementsByAccount$.next(byAccount);
   }
 
   // Call this in your app to initialize default detection rules if none exist

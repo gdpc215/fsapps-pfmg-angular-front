@@ -34,143 +34,137 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <div class="md:col-span-3">
+  <div class="grid grid-cols-1 gap-4" [ngClass]="isRecentMovementsExpanded ? 'md:grid-cols-4' : 'md:grid-cols-1'">
+    <div [ngClass]="isRecentMovementsExpanded ? 'md:col-span-3' : 'md:col-span-1'">
       <div *ngIf="parsedMovements.length === 0" class="text-center py-12 text-gray-500">
         <mat-icon class="text-6xl mb-4">receipt_long</mat-icon>
         <p>No preview available. Select a file to preview imported movements.</p>
       </div>
 
       <div *ngIf="parsedMovements.length > 0" class="bg-white rounded-lg shadow overflow-hidden">
-        <table mat-table [dataSource]="parsedMovements" class="w-full">
-      <ng-container matColumnDef="exclude">
-        <th mat-header-cell *matHeaderCellDef class="font-bold">Exclude</th>
-        <td mat-cell *matCellDef="let item">
-          <div class="flex items-center gap-1">
-            <mat-checkbox [(ngModel)]="item.excluded" [disabled]="isConfirmedDuplicate(item)" [checked]="isConfirmedDuplicate(item)"></mat-checkbox>
-            <mat-icon *ngIf="isPotentialDuplicate(item)" 
-                      class="text-yellow-500 text-base" 
-                      matTooltip="Potential duplicate detected - similar movement found with different description">
-              warning
-            </mat-icon>
-          </div>
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="date">
-        <th mat-header-cell *matHeaderCellDef class="font-bold">Date</th>
-        <td mat-cell *matCellDef="let item" [class.text-gray-400]="isConfirmedDuplicate(item)">
-          <div class="flex flex-col">
-            <span>{{ item.date | date:'dd/MM/yyyy' }}</span>
-            <span *ngIf="isPotentialDuplicate(item) && getDuplicateMovement(item) as duplicate" class="text-xs text-gray-500 italic mt-1">
-              {{ duplicate.date | date:'dd/MM/yyyy' }}
-            </span>
-          </div>
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="description">
-        <th mat-header-cell *matHeaderCellDef class="font-bold">Description</th>
-        <td mat-cell *matCellDef="let item"  class="max-w-[200px]">
-          <div class="flex flex-col">
-            <span class="text-xs" [class.text-gray-400]="isConfirmedDuplicate(item)">{{ item.bankDescription }}</span>
-            <span *ngIf="isPotentialDuplicate(item) && getDuplicateMovement(item) as duplicate" class="text-xs text-gray-500 italic mt-1">
-              {{ duplicate.bankDescription }}
-            </span>
-          </div>
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="payee">
-        <th mat-header-cell *matHeaderCellDef class="font-bold">Payee</th>
-        <td mat-cell *matCellDef="let item">
-          <div class="flex flex-col">
-            <input 
-              type="text" 
-              [(ngModel)]="item.payee" 
-              (blur)="updatePayee(item, item.payee)"
-              [readonly]="isConfirmedDuplicate(item)"
-              [class]="isConfirmedDuplicate(item) ? 'w-full px-2 py-1 border border-gray-200 rounded text-sm bg-gray-50 text-gray-400 cursor-not-allowed' : 'w-full px-2 py-1 border border-gray-200 rounded focus:border-blue-500 focus:outline-none text-sm'"
-              placeholder="Enter payee..."
-            />
-            <span *ngIf="isPotentialDuplicate(item) && getDuplicateMovement(item) as duplicate" class="text-xs text-gray-500 italic mt-1">
-              {{ duplicate.payee || 'Payee' }}
-            </span>
-          </div>
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="subcategory">
-        <th mat-header-cell *matHeaderCellDef class="font-bold">Subcategory</th>
-        <td mat-cell *matCellDef="let item" class="py-2">
-          <div class="flex flex-col">
-            <app-category-subcategory-dropdown
-              [categories]="categories"
-              [selectedSubcategoryId]="item.proposedSubcategoryId"
-              (subcategorySelected)="onSubcategoryChange(item, $event)"
-            ></app-category-subcategory-dropdown>
-            <div *ngIf="isPotentialDuplicate(item) && getDuplicateMovement(item) as duplicate" class="text-xs text-gray-500 italic mt-1">
-              <span *ngIf="duplicate.categoryId">{{ getCategoryName(duplicate.categoryId) }}</span>
-              <span *ngIf="duplicate.subcategoryId"><br/>{{ getSubcategoryName(duplicate.subcategoryId) }}</span>
-            </div>
-          </div>
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="amount">
-        <th mat-header-cell *matHeaderCellDef class="font-bold text-right">Amount</th>
-        <td mat-cell *matCellDef="let item" class="text-right">
-          <div class="flex flex-col items-end">
-            <div class="flex flex-col items-end">
-              <div class="text-xs text-gray-400 leading-tight" *ngIf="getCurrencyDetails(item.currency) as curr">
-                {{ curr.name }} ({{ curr.symbol }})
-              </div>
-              <div class="text-sm font-medium leading-tight" 
-                   [class.text-red-600]="item.amount < 0" 
-                   [class.text-green-600]="item.amount > 0">
-                {{ item.amount | number:'1.2-2' }}
-              </div>
-            </div>
-            <div *ngIf="isPotentialDuplicate(item) && getDuplicateMovement(item) as duplicate" class="flex flex-col items-end mt-1">
-              <div class="text-xs text-gray-500 italic leading-tight" *ngIf="getCurrencyDetails(duplicate.currency) as curr">
-                {{ curr.name }} ({{ curr.symbol }})
-              </div>
-              <div class="text-xs italic leading-tight" 
-                   [class.text-red-600]="duplicate.amount < 0" 
-                   [class.text-green-600]="duplicate.amount > 0">
-                {{ duplicate.amount | number:'1.2-2' }}
-              </div>
-            </div>
-          </div>
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef class="font-bold text-right">Actions</th>
-        <td mat-cell *matCellDef="let item" class="text-right">
-          <button mat-icon-button [matMenuTriggerFor]="menu" matTooltip="Actions">
-            <mat-icon>more_vert</mat-icon>
-          </button>
-          <mat-menu #menu="matMenu">
-            <button mat-menu-item (click)="openDescriptionDialog(item)">
-              <mat-icon>description</mat-icon>
-              <span>Add Additional Info</span>
-            </button>
-          </mat-menu>
-        </td>
-      </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="previewColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: previewColumns;"
-          [ngClass]="{'bg-gray-100 text-gray-400': isConfirmedDuplicate(row), 'bg-yellow-50': isPotentialDuplicate(row)}"></tr>
+        <table class="w-full border-collapse">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Exclude</th>
+              <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Date</th>
+              <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Description</th>
+              <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Payee</th>
+              <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Subcategory</th>
+              <th class="px-4 py-3 text-right text-sm font-bold text-gray-700">Amount</th>
+              <th class="px-4 py-3 text-right text-sm font-bold text-gray-700">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let row of parsedMovements">
+              <!-- Main import row -->
+              <tr [ngClass]="{'bg-gray-100 text-gray-400': row.excluded, 'bg-yellow-50': isPotentialDuplicate(row) && !row.excluded}" 
+                  class="border-b border-gray-200">
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-1">
+                    <mat-checkbox [(ngModel)]="row.excluded"></mat-checkbox>
+                    <mat-icon *ngIf="isPotentialDuplicate(row)" 
+                              class="text-yellow-500 text-base" 
+                              matTooltip="Potential duplicate detected - similar movement found with different description">
+                      warning
+                    </mat-icon>
+                  </div>
+                </td>
+                <td class="px-4 py-3" [class.text-gray-400]="row.excluded">
+                  {{ row.date | date:'dd/MM/yyyy' }}
+                </td>
+                <td class="px-4 py-3 max-w-[200px]">
+                  <span class="text-xs" [class.text-gray-400]="row.excluded">{{ row.bankDescription }}</span>
+                </td>
+                <td class="px-4 py-3">
+                  <input 
+                    type="text" 
+                    [(ngModel)]="row.payee" 
+                    (blur)="updatePayee(row, row.payee)"
+                    [readonly]="row.excluded"
+                    [class]="row.excluded ? 'w-full px-2 py-1 border border-gray-200 rounded text-sm bg-gray-50 text-gray-400 cursor-not-allowed' : 'w-full px-2 py-1 border border-gray-200 rounded focus:border-blue-500 focus:outline-none text-sm'"
+                    placeholder="Enter payee..."
+                  />
+                </td>
+                <td class="px-4 py-3">
+                  <app-category-subcategory-dropdown
+                    [categories]="categories"
+                    [selectedSubcategoryId]="row.proposedSubcategoryId"
+                    (subcategorySelected)="onSubcategoryChange(row, $event)"
+                  ></app-category-subcategory-dropdown>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <div class="flex flex-col items-end">
+                    <div class="text-xs text-gray-400 leading-tight" *ngIf="getCurrencyDetails(row.currency) as curr">
+                      {{ curr.name }} ({{ curr.symbol }})
+                    </div>
+                    <div class="text-sm font-medium leading-tight" 
+                         [class.text-red-600]="row.amount < 0" 
+                         [class.text-green-600]="row.amount > 0">
+                      {{ row.amount | number:'1.2-2' }}
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <button mat-icon-button [matMenuTriggerFor]="menu" matTooltip="Actions">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menu="matMenu">
+                    <button mat-menu-item (click)="openDescriptionDialog(row)">
+                      <mat-icon>description</mat-icon>
+                      <span>Add Additional Info</span>
+                    </button>
+                  </mat-menu>
+                </td>
+              </tr>
+              
+              <!-- Duplicate row shown below (only for potential duplicates) -->
+              <tr *ngIf="isPotentialDuplicate(row) && getDuplicateMovement(row) as duplicate" 
+                  class="bg-gray-50 border-b border-gray-200">
+                <td class="px-4 py-2"></td>
+                <td class="px-4 py-2 text-gray-500 text-xs italic">
+                  {{ duplicate.date | date:'dd/MM/yyyy' }}
+                </td>
+                <td class="px-4 py-2 text-gray-500 text-xs italic max-w-[200px]">
+                  {{ duplicate.bankDescription }}
+                </td>
+                <td class="px-4 py-2 text-gray-500 text-xs italic">
+                  {{ duplicate.payee || '' }}
+                </td>
+                <td class="px-4 py-2 text-gray-500 text-xs italic">
+                  <div>
+                    <span *ngIf="duplicate.categoryId">{{ getCategoryName(duplicate.categoryId) }}</span>
+                    <span *ngIf="duplicate.subcategoryId"><br/>{{ getSubcategoryName(duplicate.subcategoryId) }}</span>
+                  </div>
+                </td>
+                <td class="px-4 py-2 text-right">
+                  <div class="flex flex-col items-end">
+                    <div class="text-xs text-gray-500 italic leading-tight" *ngIf="getCurrencyDetails(duplicate.currency) as curr">
+                      {{ curr.name }} ({{ curr.symbol }})
+                    </div>
+                    <div class="text-xs italic leading-tight" 
+                         [class.text-red-600]="duplicate.amount < 0" 
+                         [class.text-green-600]="duplicate.amount > 0">
+                      {{ duplicate.amount | number:'1.2-2' }}
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-2"></td>
+              </tr>
+            </ng-container>
+          </tbody>
         </table>
       </div>
     </div>
 
     <!-- Right column: existing movements for selected account -->
-    <div class="md:col-span-1">
+    <div class="md:col-span-1" *ngIf="isRecentMovementsExpanded">
       <div class="bg-white rounded-lg shadow p-4">
-        <h4 class="font-semibold mb-2">Recent Movements (Last 2 Weeks)</h4>
+        <div class="flex justify-between items-center mb-2">
+          <h4 class="font-semibold">Recent Movements (Last 2 Weeks)</h4>
+          <button mat-icon-button (click)="toggleRecentMovements()" matTooltip="Hide recent movements">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
         <div *ngIf="!selectedAccount" class="text-sm text-gray-500">Select an account to view its movements.</div>
         <div *ngIf="selectedAccount && selectedAccount.id">
           <div *ngIf="movementsForSelectedAccount.length === 0" class="text-sm text-gray-500 mt-2">No recent movements for this account.</div>
@@ -195,6 +189,15 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Collapsed sidebar toggle button -->
+    <div class="fixed right-0 top-1/2 transform -translate-y-1/2 z-10" *ngIf="!isRecentMovementsExpanded">
+      <button mat-icon-button (click)="toggleRecentMovements()" 
+              class="bg-white shadow-lg rounded-l-lg" 
+              matTooltip="Show recent movements">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
     </div>
   </div>
 </div>

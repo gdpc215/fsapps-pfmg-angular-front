@@ -47,13 +47,13 @@ export class MovementsComponent implements OnInit {
   }
 
   loadData(): void {
-    this.movementService.getMovements().subscribe(movements => {
-      this.movements = movements;
-      this.filterMovements();
-    });
-
     this.accountService.getAccounts().subscribe(accounts => {
       this.accounts = accounts;
+      // Auto-select first account if available
+      if (accounts.length > 0 && !this.selectedAccount) {
+        this.selectedAccount = accounts[0].id;
+        this.loadMovementsForAccount();
+      }
     });
 
     this.currencyService.getCurrencies().subscribe(currencies => {
@@ -66,12 +66,18 @@ export class MovementsComponent implements OnInit {
     });
   }
 
+  loadMovementsForAccount(): void {
+    if (this.selectedAccount) {
+      this.movements = this.movementService.getMovementsByAccountOrCard(this.selectedAccount);
+      this.filterMovements();
+    } else {
+      this.movements = [];
+      this.filterMovements();
+    }
+  }
+
   filterMovements(): void {
     let filtered = [...this.movements];
-
-    if (this.selectedAccount) {
-      filtered = filtered.filter(m => m.accountOrCardId === this.selectedAccount);
-    }
 
     if (this.selectedCategory === 'uncategorized') {
       filtered = filtered.filter(m => !m.categoryId);
@@ -86,6 +92,10 @@ export class MovementsComponent implements OnInit {
     this.filteredMovements = filtered.sort((a, b) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
+  }
+
+  onAccountChange(): void {
+    this.loadMovementsForAccount();
   }
 
   getCategoryName(categoryId: string): string {

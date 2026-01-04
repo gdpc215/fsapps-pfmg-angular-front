@@ -22,8 +22,7 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <mat-form-field appearance="outline">
         <mat-label>Account</mat-label>
-        <mat-select [(value)]="selectedAccount" (selectionChange)="filterMovements()">
-          <mat-option [value]="null">All</mat-option>
+        <mat-select [(value)]="selectedAccount" (selectionChange)="onAccountChange()">
           <mat-option *ngFor="let account of accounts" [value]="account.id">
             {{ account.name }} ({{ account.type }})
           </mat-option>

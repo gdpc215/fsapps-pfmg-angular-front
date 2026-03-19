@@ -15,6 +15,7 @@ export class Constants {
     public static readonly CARDS = "CARDS";
     public static readonly MOVEMENTS = "MOVEMENTS";
     public static readonly MOVEMENTS_BY_ACCOUNT = "MOVEMENTS_BY_ACCOUNT";
+    public static readonly CARD_BALANCE_SNAPSHOTS = "CARD_BALANCE_SNAPSHOTS";
     public static readonly CATEGORIES = "CATEGORIES";
     public static readonly CATEGORY_RULES = "CATEGORY_RULES";
     public static readonly RECURRENT_TRANSACTIONS = "RECURRENT_TRANSACTIONS";

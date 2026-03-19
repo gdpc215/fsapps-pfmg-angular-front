@@ -81,6 +81,9 @@
         <button mat-raised-button color="accent" class="flex-1" (click)="openCheckpointDialog(account)">
           <mat-icon>save</mat-icon> Set Checkpoint
         </button>
+        <button *ngIf="account.type === AccountType.CREDIT" mat-stroked-button color="primary" (click)="openSnapshotsDialog(account)" matTooltip="Manage owed balance snapshots">
+          <mat-icon>history</mat-icon>
+        </button>
         <button mat-stroked-button color="primary" (click)="recalculateBalance(account)" matTooltip="Recalculate balance from movements">
           <mat-icon>refresh</mat-icon>
         </button>

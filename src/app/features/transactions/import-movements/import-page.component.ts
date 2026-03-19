@@ -2,17 +2,20 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import * as XLSX from 'xlsx';
 import { AccountService } from '../../../logic/services/account.service';
+import { CardBalanceSnapshotService } from '../../../logic/services/card-balance-snapshot.service';
 import { CategoryService } from '../../../logic/services/category.service';
 import { CurrencyService } from '../../../logic/services/currency.service';
 import { MovementService } from '../../../logic/services/movement.service';
 import { RecurrentTransactionService } from '../../../logic/services/recurrent-transaction.service';
 import { Account, AccountType } from '../../../logic/types/account';
+import { CardBalanceSnapshot } from '../../../logic/types/card-balance-snapshot';
 import { Category } from '../../../logic/types/category';
 import { Currency } from '../../../logic/types/currency';
 import { DuplicityStatus, ImportingMovement } from '../../../logic/types/importing-movement';
-import { Movement } from '../../../logic/types/movement';
+import { Movement, MovementType } from '../../../logic/types/movement';
 import { Utilities } from '../../../logic/utilities';
 import { DescriptionDialogComponent } from '../movements/description-dialog/description-dialog.component';
+import { ReconciliationDialogComponent, ReconciliationDialogData } from './reconciliation-dialog/reconciliation-dialog.component';
 
 @Component({
   selector: 'app-import-page',
@@ -33,9 +36,16 @@ export class ImportPageComponent implements OnInit {
   isRecentMovementsExpanded = false;
 
   movements: Movement[] = [];
+  accountSnapshots: CardBalanceSnapshot[] = [];
+
+  selectedPreviousSnapshotId: string | null = null;
+  currentOwedAmount: number | null = null;
+  currentSnapshotDate: string = this.toDateInputValue(new Date());
+  reconciliationTolerance = 0.01;
 
   constructor(
     private accountService: AccountService,
+    private cardBalanceSnapshotService: CardBalanceSnapshotService,
     private currencyService: CurrencyService,
     private categoryService: CategoryService,
     public movementService: MovementService,
@@ -50,10 +60,23 @@ export class ImportPageComponent implements OnInit {
       if (this.accounts.length > 0 && !this.selectedAccount) {
         this.selectedAccount = this.accounts[0];
         this.loadMovementsForAccount();
+        this.loadSnapshotsForAccount();
       }
     });
     this.currencyService.getCurrencies().subscribe(c => this.currencies = c);
     this.categoryService.getCategories().subscribe(c => this.categories = c);
+  }
+
+  get selectedAccountIsCredit(): boolean {
+    return this.selectedAccount?.type === AccountType.CREDIT;
+  }
+
+  get selectedPreviousSnapshot(): CardBalanceSnapshot | null {
+    if (!this.selectedPreviousSnapshotId) {
+      return null;
+    }
+
+    return this.accountSnapshots.find(s => s.id === this.selectedPreviousSnapshotId) || null;
   }
 
   loadMovementsForAccount(): void {
@@ -87,6 +110,22 @@ export class ImportPageComponent implements OnInit {
     this.parsedMovements = [];
     this.currencyWarnings = [];
     this.loadMovementsForAccount();
+    this.loadSnapshotsForAccount();
+  }
+
+  loadSnapshotsForAccount(): void {
+    if (!this.selectedAccount || this.selectedAccount.type !== AccountType.CREDIT) {
+      this.accountSnapshots = [];
+      this.selectedPreviousSnapshotId = null;
+      this.currentOwedAmount = null;
+      this.currentSnapshotDate = this.toDateInputValue(new Date());
+      return;
+    }
+
+    this.accountSnapshots = this.cardBalanceSnapshotService.getSnapshotsByAccountId(this.selectedAccount.id);
+    this.selectedPreviousSnapshotId = this.accountSnapshots.length > 0 ? this.accountSnapshots[0].id : null;
+    this.currentOwedAmount = null;
+    this.currentSnapshotDate = this.toDateInputValue(new Date());
   }
 
   onFileSelect(event: any): void {
@@ -295,6 +334,7 @@ export class ImportPageComponent implements OnInit {
 
   onImport(): void {
     if (!this.selectedAccount) { alert('Please select an account before importing'); return; }
+
     const movementsToImport = this.parsedMovements.filter(m => !m.excluded).map(importingMovement => {
       // Convert ImportingMovement to Movement by extracting only Movement properties
       // Use proposed category/subcategory as the final values
@@ -312,14 +352,159 @@ export class ImportPageComponent implements OnInit {
       movement.operationNumber = importingMovement.operationNumber;
       return movement;
     });
-    if (movementsToImport.length > 0) {
-      this.movementService.addMovements(movementsToImport);
-      // reset
-      this.selectedFile = null;
-      this.parsedMovements = [];
-      this.currencyWarnings = [];
-      alert(`${movementsToImport.length} movements imported`);
+
+    if (movementsToImport.length === 0) {
+      return;
     }
+
+    if (!this.selectedAccountIsCredit) {
+      this.finishImport(movementsToImport);
+      return;
+    }
+
+    if (!this.selectedPreviousSnapshot) {
+      alert('Select a previous owed snapshot for this card before importing.');
+      return;
+    }
+
+    if (this.currentOwedAmount === null || Number.isNaN(this.currentOwedAmount)) {
+      alert('Enter the current owed amount before importing.');
+      return;
+    }
+
+    const currentSnapshotDate = new Date(this.currentSnapshotDate);
+    if (Number.isNaN(currentSnapshotDate.getTime())) {
+      alert('Enter a valid current owed date.');
+      return;
+    }
+
+    const previousSnapshot = this.selectedPreviousSnapshot;
+    const importedMovementsTotal = movementsToImport
+      .filter(m => {
+        const movementDate = new Date(m.date).getTime();
+        const previousDate = new Date(previousSnapshot.snapshotDate).getTime();
+        const currentDate = currentSnapshotDate.getTime();
+        return movementDate > previousDate && movementDate <= currentDate;
+      })
+      .reduce((sum, m) => sum + m.amount, 0);
+
+    const expectedCurrentOwed = this.roundTo2(previousSnapshot.owedAmount + importedMovementsTotal);
+    const delta = this.roundTo2(this.currentOwedAmount - expectedCurrentOwed);
+
+    const persistSnapshot = (): void => {
+      const newSnapshot = new CardBalanceSnapshot();
+      newSnapshot.accountId = this.selectedAccount!.id;
+      newSnapshot.snapshotDate = currentSnapshotDate;
+      newSnapshot.owedAmount = this.currentOwedAmount!;
+      newSnapshot.notes = 'Imported batch checkpoint';
+      this.cardBalanceSnapshotService.addSnapshot(newSnapshot);
+    };
+
+    if (Math.abs(delta) < this.reconciliationTolerance) {
+      this.finishImport(movementsToImport);
+      persistSnapshot();
+      return;
+    }
+
+    const dialogData: ReconciliationDialogData = {
+      accountName: this.selectedAccount.name,
+      previousOwedAmount: previousSnapshot.owedAmount,
+      previousSnapshotDate: previousSnapshot.snapshotDate,
+      importedMovementsTotal,
+      expectedCurrentOwed,
+      currentOwedAmount: this.currentOwedAmount,
+      delta
+    };
+
+    this.dialog.open(ReconciliationDialogComponent, {
+      width: '560px',
+      data: dialogData
+    }).afterClosed().subscribe(confirmed => {
+      const finalMovements = [...movementsToImport];
+
+      if (confirmed) {
+        finalMovements.push(this.buildInterestAdjustmentMovement(delta, currentSnapshotDate));
+      }
+
+      this.finishImport(finalMovements);
+      persistSnapshot();
+    });
+  }
+
+  private buildInterestAdjustmentMovement(delta: number, date: Date): Movement {
+    const movement = new Movement();
+    movement.accountOrCardId = this.selectedAccount!.id;
+    movement.date = date;
+    movement.payee = this.selectedAccount!.name;
+    movement.bankDescription = 'Interest reconciliation adjustment';
+    movement.additionalInfo = 'Auto-generated from snapshot reconciliation';
+    movement.notes = `Delta adjustment based on owed snapshots. Delta: ${delta.toFixed(2)}`;
+    movement.amount = delta;
+    movement.currency = this.getSelectedAccountCurrencyCode();
+    movement.type = delta < 0 ? MovementType.EXPENSE : MovementType.INCOME;
+    movement.isStub = true;
+    movement.adjustmentType = 'INTEREST_RECONCILIATION';
+    movement.adjustmentContext = `snapshot:${this.selectedPreviousSnapshotId}->${this.currentSnapshotDate}`;
+
+    const categoryPair = this.getAdjustmentCategoryIds();
+    movement.categoryId = categoryPair.categoryId;
+    movement.subcategoryId = categoryPair.subcategoryId;
+
+    return movement;
+  }
+
+  private getAdjustmentCategoryIds(): { categoryId: string | null, subcategoryId: string | null } {
+    const chargesAndFees = this.categories.find(c => c.name.toLowerCase() === 'charges & fees');
+    if (chargesAndFees?.parentId) {
+      return {
+        categoryId: chargesAndFees.parentId,
+        subcategoryId: chargesAndFees.id
+      };
+    }
+
+    const financialMovements = this.categories.find(c => c.name.toLowerCase() === 'financial movements' && c.parentId === null);
+    if (financialMovements) {
+      return {
+        categoryId: financialMovements.id,
+        subcategoryId: null
+      };
+    }
+
+    return {
+      categoryId: null,
+      subcategoryId: null
+    };
+  }
+
+  private getSelectedAccountCurrencyCode(): string {
+    if (!this.selectedAccount) {
+      return '';
+    }
+
+    const currency = this.currencies.find(c => c.id === this.selectedAccount!.currencyId);
+    return currency?.code || '';
+  }
+
+  private finishImport(movements: Movement[]): void {
+    this.movementService.addMovements(movements);
+    this.selectedFile = null;
+    this.parsedMovements = [];
+    this.currencyWarnings = [];
+    this.currentOwedAmount = null;
+    this.currentSnapshotDate = this.toDateInputValue(new Date());
+    this.loadSnapshotsForAccount();
+    alert(`${movements.length} movements imported`);
+  }
+
+  private roundTo2(value: number): number {
+    return Math.round((value + Number.EPSILON) * 100) / 100;
+  }
+
+  private toDateInputValue(date: Date): string {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   onCancel(): void { this.selectedFile = null; this.parsedMovements = []; this.currencyWarnings = []; }

@@ -8,6 +8,7 @@ import { Account, AccountType } from '../../../../logic/types/account';
 import { Currency } from '../../../../logic/types/currency';
 import { AccountDialogComponent } from './account-dialog/account-dialog.component';
 import { CheckpointDialogComponent } from './checkpoint-dialog/checkpoint-dialog.component';
+import { SnapshotsDialogComponent } from './snapshots-dialog/snapshots-dialog.component';
 
 @Component({
   selector: 'app-accounts',
@@ -91,5 +92,12 @@ export class AccountsComponent implements OnInit {
     const movements = this.movementService.getMovementsByAccountOrCard(account.id);
     const totalAmount = movements.reduce((sum, m) => sum + m.amount, 0);
     this.accountService.recalculateBalance(account.id, totalAmount);
+  }
+
+  openSnapshotsDialog(account: Account): void {
+    this.dialog.open(SnapshotsDialogComponent, {
+      width: '900px',
+      data: { account }
+    });
   }
 }

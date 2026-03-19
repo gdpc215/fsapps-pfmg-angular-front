@@ -19,6 +19,8 @@ export class Movement {
   categoryId: string | null;
   subcategoryId: string | null;
   isStub: boolean; // For auto-generated discrepancy movements
+  adjustmentType?: 'INTEREST_RECONCILIATION';
+  adjustmentContext?: string;
   labels: string[];       // Tags/labels for categorization
   
   // Transfer specific fields

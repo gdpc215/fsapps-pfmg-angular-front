@@ -5,6 +5,7 @@ import { SharedModule } from '../../../shared/shared.module';
 import { AccountDialogComponent } from './accounts/account-dialog/account-dialog.component';
 import { AccountsComponent } from './accounts/accounts.component';
 import { CheckpointDialogComponent } from './accounts/checkpoint-dialog/checkpoint-dialog.component';
+import { SnapshotsDialogComponent } from './accounts/snapshots-dialog/snapshots-dialog.component';
 import { CategoriesComponent } from './categories/categories.component';
 import { CategoryDialogComponent } from './categories/category-dialog/category-dialog.component';
 import { RulesDialogComponent } from './categories/rules-dialog/rules-dialog.component';
@@ -37,6 +38,7 @@ const routes: Routes = [
     AccountsComponent,
     AccountDialogComponent,
     CheckpointDialogComponent,
+    SnapshotsDialogComponent,
     CategoriesComponent,
     CategoryDialogComponent,
     RulesDialogComponent,

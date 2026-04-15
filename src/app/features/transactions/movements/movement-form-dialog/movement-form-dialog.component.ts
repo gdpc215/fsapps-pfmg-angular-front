@@ -5,7 +5,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Account, AccountType } from '../../../../logic/types/account';
 import { Category } from '../../../../logic/types/category';
 import { Currency } from '../../../../logic/types/currency';
-import { Movement, MovementType } from '../../../../logic/types/movement';
+import { Transaction, TransactionType } from '../../../../logic/types/transaction';
 
 @Component({
   selector: 'app-movement-form-dialog',
@@ -24,7 +24,7 @@ export class MovementFormDialogComponent implements OnInit {
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<MovementFormDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { 
-      movement: Movement | null, 
+      movement: Transaction | null, 
       accounts: Account[], 
       currencies: Currency[],
       categories: Category[]
@@ -33,7 +33,7 @@ export class MovementFormDialogComponent implements OnInit {
 
   ngOnInit(): void {
     const movement = this.data.movement;
-    this.isTransfer = movement?.type === MovementType.TRANSFER;
+    this.isTransfer = movement?.type === TransactionType.TRANSFER;
 
     // Filter top-level categories
     this.topLevelCategories = this.data.categories.filter(c => c.parentId === null);
@@ -44,7 +44,7 @@ export class MovementFormDialogComponent implements OnInit {
     }
 
     this.form = this.fb.group({
-      type: [movement?.type || MovementType.EXPENSE, Validators.required],
+      type: [movement?.type || TransactionType.EXPENSE, Validators.required],
       date: [movement?.date || new Date(), Validators.required],
       accountOrCardId: [movement?.accountOrCardId || '', Validators.required],
       targetAccountOrCardId: [movement?.targetAccountOrCardId || null],
@@ -57,7 +57,8 @@ export class MovementFormDialogComponent implements OnInit {
       subcategoryId: [movement?.subcategoryId || null],
       currency: [movement?.currency || '', Validators.required],
       amount: [movement?.amount || 0, Validators.required],
-      operationNumber: [movement?.operationNumber || null]
+      operationNumber: [movement?.operationNumber || null],
+      isManualOverride: [movement?.isManualOverride ?? true]
     });
 
     if (movement?.accountOrCardId) {
@@ -86,11 +87,11 @@ export class MovementFormDialogComponent implements OnInit {
   get amountHint(): string {
     const type = this.form.get('type')?.value;
     switch (type) {
-      case MovementType.EXPENSE:
+      case TransactionType.EXPENSE:
         return 'Enter as positive number (will be stored as negative)';
-      case MovementType.INCOME:
+      case TransactionType.INCOME:
         return 'Enter as positive number';
-      case MovementType.TRANSFER:
+      case TransactionType.TRANSFER:
         return 'Amount to transfer';
       default:
         return '';
@@ -99,7 +100,7 @@ export class MovementFormDialogComponent implements OnInit {
 
   onTypeChange(): void {
     const type = this.form.get('type')?.value;
-    this.isTransfer = type === MovementType.TRANSFER;
+    this.isTransfer = type === TransactionType.TRANSFER;
 
     // Update validators based on type
     const targetControl = this.form.get('targetAccountOrCardId');
@@ -185,7 +186,7 @@ export class MovementFormDialogComponent implements OnInit {
     }
 
     if (this.form.valid || (this.form.get('currency')?.disabled && this.form.get('currency')?.value)) {
-      const movement = new Movement();
+      const movement = new Transaction();
       
       if (this.data.movement) {
         movement.id = this.data.movement.id;
@@ -206,13 +207,18 @@ export class MovementFormDialogComponent implements OnInit {
       
       // Handle amount based on type
       let amount = Math.abs(this.form.value.amount);
-      if (movement.type === MovementType.EXPENSE) {
+      if (movement.type === TransactionType.EXPENSE) {
         amount = -amount; // Store expenses as negative
       }
       movement.amount = amount;
       
       movement.operationNumber = this.form.value.operationNumber;
       movement.targetAccountOrCardId = this.form.value.targetAccountOrCardId;
+      movement.isManualOverride = this.form.value.isManualOverride;
+
+      if (this.data.movement) {
+        movement.isManualOverride = this.form.value.isManualOverride ?? true;
+      }
 
       this.dialogRef.close(movement);
     }

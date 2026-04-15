@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>Add Account</h2>
+<h2 mat-dialog-title>{{ isEditing ? 'Edit Account' : 'Add Account' }}</h2>
 
 <mat-dialog-content class="min-w-[400px]">
   <form [formGroup]="form" class="flex flex-col gap-4">
@@ -14,10 +14,12 @@
       <div class="flex flex-col">
         <label class="text-sm text-gray-600 mb-1">Color</label>
         <div class="flex items-center gap-2 border border-gray-300 rounded px-3 py-2 h-[56px]">
-          <div [style.background-color]="form.get('color')?.value" 
-               class="w-8 h-8 rounded-full border-2 border-gray-200 cursor-pointer"
-               (click)="colorPicker.click()"></div>
-          <input type="color" #colorPicker formControlName="color" class="hidden">
+          <div class="relative w-8 h-8">
+            <div [style.background-color]="form.get('color')?.value"
+                 class="w-8 h-8 rounded-full border-2 border-gray-200 cursor-pointer"></div>
+            <input type="color" #colorPicker formControlName="color"
+                   class="absolute inset-0 opacity-0 cursor-pointer w-full h-full rounded-full">
+          </div>
           <span class="text-sm text-gray-600">{{ form.get('color')?.value }}</span>
         </div>
       </div>
@@ -45,7 +47,7 @@
       <mat-form-field appearance="outline" class="flex-1">
         <mat-label>Currency</mat-label>
         <mat-select formControlName="currencyId">
-          <mat-option *ngFor="let currency of data.currencies" [value]="currency.id">
+          <mat-option *ngFor="let currency of currencies" [value]="currency.id">
             {{ currency.code }}
           </mat-option>
         </mat-select>
@@ -54,7 +56,7 @@
     </div>
 
     <!-- Credit Card Specific Fields (collapsible) -->
-    <mat-expansion-panel *ngIf="isCredit" class="mt-2">
+    <mat-expansion-panel *ngIf="isCredit" class="mt-2" [expanded]="creditPanelOpen">
       <mat-expansion-panel-header>
         <mat-panel-title>Credit Card Details</mat-panel-title>
       </mat-expansion-panel-header>
@@ -63,7 +65,7 @@
         <mat-form-field appearance="outline">
           <mat-label>Payment Currency</mat-label>
           <mat-select formControlName="paymentCurrencyId">
-            <mat-option *ngFor="let currency of data.currencies" [value]="currency.id">
+            <mat-option *ngFor="let currency of currencies" [value]="currency.id">
               {{ currency.symbol }} {{ currency.code }}
             </mat-option>
           </mat-select>
@@ -96,6 +98,6 @@
 
 <mat-dialog-actions class="px-6 pb-4">
   <button mat-flat-button color="primary" (click)="onSave()" [disabled]="form.invalid" class="w-full">
-    Create account
+    {{ isEditing ? 'Save changes' : 'Create account' }}
   </button>
 </mat-dialog-actions>

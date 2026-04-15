@@ -1,3 +1,5 @@
+import { FinancialSourceType } from './financial-source';
+
 export enum AccountType {
   DEBIT = 'DEBIT',
   CREDIT = 'CREDIT'
@@ -7,29 +9,33 @@ export class Account {
   id: string;
   name: string;
   type: AccountType;
-  color: string;                // Color for visual identification
+  color: string;
   currencyId: string;
-  initialBalance: number;       // Starting balance (editable)
-  currentBalance: number;       // Calculated: initialBalance + sum of movements (read-only)
+  initialBalance: number;
+  currentBalance: number;
   lastCheckpointBalance: number;
   lastCheckpointDate: Date | null;
-  
-  // Credit card specific fields
-  paymentCurrencyId?: string;  // For credit cards with different payment currency
-  paymentDate?: number;         // Day of month for payment (1-31)
-  billingDate?: number;         // Day of month for billing/interest calculation (1-31)
+  paymentCurrencyId?: string;
+  paymentDate?: number;
+  billingDate?: number;
   creditLimit?: number;
 
   constructor() {
-    this.id = "";
-    this.name = "";
+    this.id = '';
+    this.name = '';
     this.type = AccountType.DEBIT;
-    this.color = "#ba68c8";      // Default purple color
-    this.currencyId = "";
+    this.color = '#ba68c8';
+    this.currencyId = '';
     this.initialBalance = 0;
     this.currentBalance = 0;
     this.lastCheckpointBalance = 0;
     this.lastCheckpointDate = null;
+  }
+
+  get sourceType(): FinancialSourceType {
+    return this.type === AccountType.CREDIT
+      ? FinancialSourceType.CREDIT_CARD
+      : FinancialSourceType.ACCOUNT;
   }
 
   get isCredit(): boolean {

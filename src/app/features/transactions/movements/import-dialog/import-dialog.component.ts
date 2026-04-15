@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import * as XLSX from 'xlsx';
 import { CategoryService } from '../../../../logic/services/category.service';
@@ -7,10 +7,10 @@ import { RecurrentTransactionService } from '../../../../logic/services/recurren
 import { Account, AccountType } from '../../../../logic/types/account';
 import { Category } from '../../../../logic/types/category';
 import { Currency } from '../../../../logic/types/currency';
-import { Movement } from '../../../../logic/types/movement';
+import { Transaction } from '../../../../logic/types/transaction';
 
 interface MovementWithExclusion {
-  movement: Movement;
+  movement: Transaction;
   excluded: boolean; // true = will be excluded from import (checked)
   isDuplicate: boolean; // true = detected as duplicate
   proposedCategoryId: string | null; // Proposed category from rules or recurrences
@@ -24,6 +24,10 @@ interface MovementWithExclusion {
   standalone: false
 })
 export class ImportDialogComponent {
+  private movementService = inject(MovementService);
+  private categoryService = inject(CategoryService);
+  private recurrentTransactionService = inject(RecurrentTransactionService);
+
   selectedAccount: Account | null = null;
   selectedFile: File | null = null;
   parsedMovements: MovementWithExclusion[] = [];
@@ -33,9 +37,6 @@ export class ImportDialogComponent {
   constructor(
     private dialogRef: MatDialogRef<ImportDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { accounts: Account[], currencies: Currency[], categories: Category[] },
-    private movementService: MovementService,
-    private categoryService: CategoryService,
-    private recurrentTransactionService: RecurrentTransactionService,
     private cdr: ChangeDetectorRef
   ) {
     // Pre-select first account if available
@@ -115,7 +116,7 @@ export class ImportDialogComponent {
     };
 
     return data.map((row, index) => {
-      const movement = new Movement();
+      const movement = new Transaction();
       movement.accountOrCardId = this.selectedAccount!.id;
 
       // Try to parse different date formats
@@ -216,7 +217,7 @@ export class ImportDialogComponent {
     });
   }
 
-  findMatchingRecurrence(movement: Movement): any {
+  findMatchingRecurrence(movement: Transaction): any {
     const automaticRecurrences = this.recurrentTransactionService.getAutomaticTransactions();
 
     return automaticRecurrences.find(rt => {

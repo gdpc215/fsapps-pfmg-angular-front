@@ -1,0 +1,68 @@
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold">Savings Goals</h2>
+    <button mat-raised-button color="primary" (click)="openGoalDialog()">
+      <mat-icon>add</mat-icon> Add Goal
+    </button>
+  </div>
+
+  <div *ngIf="goals.length === 0" class="text-center py-16 text-gray-400">
+    <mat-icon style="font-size: 48px; width: 48px; height: 48px;">savings</mat-icon>
+    <p class="mt-3 text-lg">No savings goals yet.</p>
+    <p class="text-sm">Add one to start tracking your progress.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div *ngFor="let goal of goals" class="bg-white rounded-lg shadow p-6">
+      <!-- Header -->
+      <div class="flex justify-between items-start mb-3">
+        <div>
+          <h3 class="text-lg font-semibold">{{ goal.name }}</h3>
+          <p class="text-sm text-gray-500">
+            {{ getTotalContributions(goal) | number:'1.2-2' }} / {{ goal.targetAmount | number:'1.2-2' }} PEN
+          </p>
+        </div>
+        <div class="flex gap-1">
+          <button mat-icon-button matTooltip="Edit goal" (click)="openGoalDialog(goal)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" matTooltip="Delete goal" (click)="deleteGoal(goal)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="w-full bg-gray-200 rounded-full h-3 mb-1">
+        <div
+          class="h-3 rounded-full transition-all duration-500"
+          [class.bg-green-500]="getProgressPercent(goal) < 100"
+          [class.bg-blue-500]="getProgressPercent(goal) >= 100"
+          [style.width.%]="getProgressPercent(goal)">
+        </div>
+      </div>
+      <p class="text-right text-xs text-gray-500 mb-4">{{ getProgressPercent(goal) | number:'1.0-1' }}%</p>
+
+      <!-- Contributions -->
+      <div class="border-t pt-3">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm font-medium text-gray-700">Contributions</span>
+          <button mat-stroked-button (click)="openContributionDialog(goal)">
+            <mat-icon>add</mat-icon> Add
+          </button>
+        </div>
+
+        <p *ngIf="goal.contributions.length === 0" class="text-sm text-gray-400 italic">No contributions yet.</p>
+
+        <div *ngFor="let c of goal.contributions; let i = index"
+             class="flex justify-between items-center py-1.5 border-b last:border-0 text-sm">
+          <span class="text-gray-600">{{ c.date | date:'mediumDate' }}</span>
+          <span class="font-medium">{{ c.amount | number:'1.2-2' }}</span>
+          <button mat-icon-button color="warn" (click)="deleteContribution(goal, i)" matTooltip="Remove contribution">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -29,7 +29,6 @@ const routes: Routes = [
     MovementsComponent,
     ManualRecurrentsComponent,
     ImportDialogComponent,
-    ImportPageComponent,
     CategorizeDialogComponent,
     DescriptionDialogComponent,
     MovementFormDialogComponent

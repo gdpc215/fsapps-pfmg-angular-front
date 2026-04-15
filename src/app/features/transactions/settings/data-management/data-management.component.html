@@ -1,0 +1,53 @@
+<div class="p-6 max-w-2xl mx-auto">
+  <h2 class="text-2xl font-bold mb-6">Data Management</h2>
+
+  <!-- Export section -->
+  <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <div class="flex items-center gap-3 mb-3">
+      <mat-icon class="text-green-600">download</mat-icon>
+      <h3 class="text-lg font-semibold">Export Backup</h3>
+    </div>
+    <p class="text-gray-600 text-sm mb-4">
+      Download all your financial data (accounts, transactions, categories, goals, etc.) as a JSON file.
+    </p>
+    <button mat-raised-button color="primary" (click)="exportState()">
+      <mat-icon>download</mat-icon> Download Backup
+    </button>
+  </div>
+
+  <!-- Import section -->
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="flex items-center gap-3 mb-3">
+      <mat-icon class="text-orange-500">upload</mat-icon>
+      <h3 class="text-lg font-semibold">Import Backup</h3>
+    </div>
+    <p class="text-gray-600 text-sm mb-4">
+      Restore data from a previously exported JSON file. <strong>This will overwrite all existing data.</strong>
+    </p>
+
+    <div class="flex items-center gap-3 mb-4">
+      <button mat-stroked-button color="accent" (click)="fileInput.click()">
+        <mat-icon>folder_open</mat-icon> Choose File
+      </button>
+      <input #fileInput type="file" accept=".json,application/json" class="hidden" (change)="onFileSelected($event)">
+      <span class="text-sm text-gray-500 italic" *ngIf="!importText">No file selected</span>
+      <span class="text-sm text-green-700 font-medium" *ngIf="importText">File loaded ✓</span>
+    </div>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Or paste JSON here</mat-label>
+      <textarea matInput [(ngModel)]="importText" rows="6" placeholder='{ "financialSources": [...], ... }'></textarea>
+    </mat-form-field>
+
+    <div *ngIf="importErrors.length > 0" class="bg-red-50 border border-red-200 rounded p-3 mb-4">
+      <p class="text-red-700 text-sm font-semibold mb-1">Import errors:</p>
+      <ul class="list-disc list-inside text-red-600 text-sm">
+        <li *ngFor="let err of importErrors">{{ err }}</li>
+      </ul>
+    </div>
+
+    <button mat-raised-button color="warn" [disabled]="!importText.trim()" (click)="importState()">
+      <mat-icon>upload</mat-icon> Import & Overwrite Data
+    </button>
+  </div>
+</div>

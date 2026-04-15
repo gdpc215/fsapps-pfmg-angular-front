@@ -1,0 +1,66 @@
+<h2 mat-dialog-title class="flex items-center gap-2">
+  <mat-icon>credit_card</mat-icon>
+  Cycle Summary — {{ data.account.name }}
+</h2>
+
+<mat-dialog-content>
+  <!-- Cycle range -->
+  <div class="flex justify-between items-center bg-blue-50 rounded-lg p-4 mb-4">
+    <div class="text-center">
+      <p class="text-xs text-gray-500 uppercase font-semibold">Cycle Start</p>
+      <p class="font-bold text-gray-800">{{ cycleStart | date:'dd MMM yyyy' }}</p>
+    </div>
+    <mat-icon class="text-blue-400">arrow_forward</mat-icon>
+    <div class="text-center">
+      <p class="text-xs text-gray-500 uppercase font-semibold">Billing Closing</p>
+      <p class="font-bold text-gray-800">{{ cycleEnd | date:'dd MMM yyyy' }}</p>
+    </div>
+    <div class="text-center">
+      <p class="text-xs text-gray-500 uppercase font-semibold">Days Left</p>
+      <p class="font-bold text-2xl" [class.text-red-600]="daysUntilClosing <= 5" [class.text-green-700]="daysUntilClosing > 5">
+        {{ daysUntilClosing }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Summary stats -->
+  <div class="flex gap-4 mb-4">
+    <div class="flex-1 bg-gray-50 rounded-lg p-3 text-center">
+      <p class="text-xs text-gray-500 uppercase font-semibold">Transactions</p>
+      <p class="font-bold text-xl text-gray-800">{{ cycleMovements.length }}</p>
+    </div>
+    <div class="flex-1 bg-gray-50 rounded-lg p-3 text-center">
+      <p class="text-xs text-gray-500 uppercase font-semibold">Total Spent</p>
+      <p class="font-bold text-xl" [class.text-red-600]="totalSpent < 0" [class.text-green-700]="totalSpent > 0">
+        {{ totalSpent | number:'1.2-2' }}
+      </p>
+    </div>
+  </div>
+
+  <mat-divider class="mb-4"></mat-divider>
+
+  <!-- Transaction list -->
+  <div *ngIf="cycleMovements.length === 0" class="text-center py-8 text-gray-400">
+    <mat-icon class="text-4xl mb-2">receipt_long</mat-icon>
+    <p>No transactions in this cycle.</p>
+  </div>
+
+  <div *ngIf="cycleMovements.length > 0" class="max-h-72 overflow-y-auto">
+    <div *ngFor="let tx of cycleMovements"
+         class="flex justify-between items-center py-2 px-1 border-b border-gray-100 last:border-0">
+      <div class="flex flex-col flex-1 min-w-0 mr-4">
+        <span class="text-sm font-medium text-gray-800 truncate">{{ tx.userDescription || tx.description }}</span>
+        <span class="text-xs text-gray-400">{{ tx.date | date:'dd/MM/yyyy' }}</span>
+      </div>
+      <span class="text-sm font-semibold whitespace-nowrap"
+            [class.text-red-600]="tx.amount < 0"
+            [class.text-green-700]="tx.amount > 0">
+        {{ tx.amount | number:'1.2-2' }} {{ tx.currency }}
+      </span>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" (click)="close()">Close</button>
+</mat-dialog-actions>

@@ -1,11 +1,13 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { SharedModule } from '../../../../../shared/shared.module';
 
 @Component({
   selector: 'app-checkpoint-dialog',
   templateUrl: './checkpoint-dialog.component.html',
-  standalone: false
+  standalone: true,
+  imports: [SharedModule, MatDialogModule]
 })
 export class CheckpointDialogComponent implements OnInit {
   form!: FormGroup;

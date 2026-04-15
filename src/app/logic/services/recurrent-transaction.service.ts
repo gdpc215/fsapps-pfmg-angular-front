@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Constants } from '../constants';
-import { Movement } from '../types/movement';
 import { ExecutionMode, RecurrenceType, RecurrentTransaction } from '../types/recurrent-transaction';
+import { Transaction } from '../types/transaction';
 import { Utilities } from '../utilities';
 import { BaseService } from './base.service';
 
@@ -156,23 +156,23 @@ export class RecurrentTransactionService extends BaseService {
   }
 
   /**
-   * Convert a recurrent transaction to a movement
+   * Convert a recurrent transaction to a transaction
    */
-  toMovement(recurrentTransaction: RecurrentTransaction): Movement {
-    const movement = new Movement();
-    movement.type = recurrentTransaction.type;
-    movement.accountOrCardId = recurrentTransaction.accountOrCardId;
-    movement.date = new Date();
-    movement.payee = recurrentTransaction.payee;
-    movement.bankDescription = recurrentTransaction.description;
-    movement.notes = recurrentTransaction.notes;
-    movement.currency = recurrentTransaction.currency;
-    movement.amount = recurrentTransaction.amount;
-    movement.categoryId = recurrentTransaction.categoryId;
-    movement.subcategoryId = recurrentTransaction.subcategoryId;
-    movement.labels = [...recurrentTransaction.labels];
-    movement.targetAccountOrCardId = recurrentTransaction.targetAccountOrCardId;
-    return movement;
+  toTransaction(recurrentTransaction: RecurrentTransaction): Transaction {
+    const transaction = new Transaction();
+    transaction.type = recurrentTransaction.type;
+    transaction.accountOrCardId = recurrentTransaction.accountOrCardId;
+    transaction.date = new Date();
+    transaction.payee = recurrentTransaction.payee;
+    transaction.bankDescription = recurrentTransaction.description;
+    transaction.notes = recurrentTransaction.notes;
+    transaction.currency = recurrentTransaction.currency;
+    transaction.amount = recurrentTransaction.amount;
+    transaction.categoryId = recurrentTransaction.categoryId;
+    transaction.subcategoryId = recurrentTransaction.subcategoryId;
+    transaction.labels = [...recurrentTransaction.labels];
+    transaction.targetAccountOrCardId = recurrentTransaction.targetAccountOrCardId;
+    return transaction;
   }
 
   /**
@@ -211,7 +211,8 @@ export class RecurrentTransactionService extends BaseService {
   }
 
   private loadFromCache(): void {
-    const cached = this.fetchFromLocalStorage<RecurrentTransaction[]>(Constants.StorageTags.RECURRENT_TRANSACTIONS);
+    const cached = this.fetchFromLocalStorage<RecurrentTransaction[]>(Constants.StorageTags.RECURRING_RULES)
+      || this.fetchFromLocalStorage<RecurrentTransaction[]>(Constants.StorageTags.RECURRENT_TRANSACTIONS);
     // Parse dates from string format and set defaults for new fields
     const recurrentTransactions = (cached || []).map(rt => ({
       ...rt,
@@ -225,7 +226,7 @@ export class RecurrentTransactionService extends BaseService {
   }
 
   private saveToCache(recurrentTransactions: RecurrentTransaction[]): void {
-    this.storeInLocalStorage(recurrentTransactions, Constants.StorageTags.RECURRENT_TRANSACTIONS);
+    this.storeInLocalStorage(recurrentTransactions, Constants.StorageTags.RECURRING_RULES);
     this.recurrentTransactions$.next(recurrentTransactions);
   }
 }

@@ -21,6 +21,9 @@ export const CatalogRoutes = {
   SETTINGS_CATEGORY_RULES: 'category-rules',
   SETTINGS_RECURRENT_TRANSACTIONS: 'recurrent-transactions',
   SETTINGS_DUPLICATE_DETECTION_RULES: 'duplicate-detection-rules',
+  SETTINGS_SNAPSHOTS: 'snapshots',
+  SETTINGS_SAVINGS_GOALS: 'savings-goals',
+  SETTINGS_DATA_MANAGEMENT: 'data-management',
 
   // NESTED: {
   //   BASE: 'nested',

@@ -1,15 +1,22 @@
 <div class="settings-container p-6">
-  <h1 class="text-3xl font-bold mb-6">Settings</h1>
+  <h1 class="text-3xl font-bold mb-8">Settings</h1>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div *ngFor="let item of settingsMenuItems" 
-         class="settings-card p-6 bg-white rounded-lg shadow-md hover:shadow-lg cursor-pointer transition-shadow"
-         (click)="navigateTo(item.route)">
-      <div class="flex items-start">
-        <mat-icon class="text-4xl mr-4 text-primary">{{item.icon}}</mat-icon>
-        <div>
-          <h2 class="text-xl font-semibold mb-2">{{item.title}}</h2>
-          <p class="text-gray-600">{{item.description}}</p>
+  <div *ngFor="let group of settingsGroups" class="mb-8">
+    <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3 px-1">
+      {{ group.label }}
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div *ngFor="let item of group.items"
+           class="settings-card p-5 bg-white rounded-lg shadow hover:shadow-md cursor-pointer transition-shadow flex items-start gap-4"
+           (click)="navigateTo(item.route)">
+        <mat-icon class="text-3xl flex-shrink-0 mt-0.5"
+                  [class.text-red-400]="item.icon === 'delete_forever'"
+                  [class.text-primary]="item.icon !== 'delete_forever'">
+          {{ item.icon }}
+        </mat-icon>
+        <div class="min-w-0">
+          <h3 class="text-base font-semibold">{{ item.title }}</h3>
+          <p class="text-sm text-gray-500 mt-0.5">{{ item.description }}</p>
         </div>
       </div>
     </div>

@@ -5,8 +5,8 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Account, AccountType } from '../../../../../logic/types/account';
 import { Category } from '../../../../../logic/types/category';
 import { Currency } from '../../../../../logic/types/currency';
-import { MovementType } from '../../../../../logic/types/movement';
 import { ExecutionMode, RecurrenceType, RecurrentTransaction } from '../../../../../logic/types/recurrent-transaction';
+import { TransactionType } from '../../../../../logic/types/transaction';
 
 @Component({
   selector: 'app-recurrent-transaction-dialog',
@@ -21,7 +21,7 @@ export class RecurrentTransactionDialogComponent implements OnInit {
   topLevelCategories: Category[] = [];
   subcategories: Category[] = [];
   
-  MovementType = MovementType;
+  TransactionType = TransactionType;
   RecurrenceType = RecurrenceType;
   ExecutionMode = ExecutionMode;
   
@@ -41,7 +41,7 @@ export class RecurrentTransactionDialogComponent implements OnInit {
 
   ngOnInit(): void {
     const rt = this.data.recurrentTransaction;
-    this.isTransfer = rt?.type === MovementType.TRANSFER;
+    this.isTransfer = rt?.type === TransactionType.TRANSFER;
 
     // Filter top-level categories
     this.topLevelCategories = this.data.categories.filter(c => c.parentId === null);
@@ -56,7 +56,7 @@ export class RecurrentTransactionDialogComponent implements OnInit {
       active: [rt?.active !== undefined ? rt.active : true],
       executionMode: [rt?.executionMode || ExecutionMode.MANUAL, Validators.required],
       maxDaysToExecute: [rt?.maxDaysToExecute || 30],
-      type: [rt?.type || MovementType.EXPENSE, Validators.required],
+      type: [rt?.type || TransactionType.EXPENSE, Validators.required],
       accountOrCardId: [rt?.accountOrCardId || '', Validators.required],
       targetAccountOrCardId: [rt?.targetAccountOrCardId || null],
       payee: [rt?.payee || ''],
@@ -97,7 +97,7 @@ export class RecurrentTransactionDialogComponent implements OnInit {
 
   onTypeChange(): void {
     const type = this.form.get('type')?.value;
-    this.isTransfer = type === MovementType.TRANSFER;
+    this.isTransfer = type === TransactionType.TRANSFER;
 
     const targetControl = this.form.get('targetAccountOrCardId');
     if (this.isTransfer) {
@@ -171,7 +171,7 @@ export class RecurrentTransactionDialogComponent implements OnInit {
         return;
       }
 
-      const isTransfer = formValue.type === MovementType.TRANSFER;
+      const isTransfer = formValue.type === TransactionType.TRANSFER;
       if (isTransfer && !formValue.targetAccountOrCardId) {
         alert('Please select a target account for the transfer.');
         return;

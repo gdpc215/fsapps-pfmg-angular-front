@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { ErrorComponent } from '../features/error/error.component';
 import { FrameComponent } from '../shared/_frame/frame.component';
 import { CatalogRoutes as routectlg } from './app.routes.catalog';
 
@@ -19,6 +20,9 @@ const routes: Routes = [
     component: FrameComponent,
     loadChildren: () => import('../features/transactions/transactions.module').then(m => m.TransactionsModule)
   },
+
+  { path: routectlg.ERROR, component: ErrorComponent },
+  { path: '**', redirectTo: routectlg.ERROR }
 ];
 
 @NgModule({

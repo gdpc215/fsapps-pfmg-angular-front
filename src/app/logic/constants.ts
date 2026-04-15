@@ -11,10 +11,12 @@ export class Constants {
   public static StorageTags = class {
     public static readonly USER_OBJECT = "USER_OBJECT";
     public static readonly CURRENCIES = "CURRENCIES";
-    public static readonly ACCOUNTS = "ACCOUNTS";
-    public static readonly CARDS = "CARDS";
-    public static readonly MOVEMENTS = "MOVEMENTS";
-    public static readonly MOVEMENTS_BY_ACCOUNT = "MOVEMENTS_BY_ACCOUNT";
+    public static readonly FINANCIAL_SOURCES = "FINANCIAL_SOURCES";
+    public static readonly TRANSACTIONS = "TRANSACTIONS";
+    public static readonly BALANCE_SNAPSHOTS = "BALANCE_SNAPSHOTS";
+    public static readonly RECURRING_RULES = "RECURRING_RULES";
+    public static readonly SAVINGS_GOALS = "SAVINGS_GOALS";
+    public static readonly APP_STATE = "APP_STATE";
     public static readonly CATEGORIES = "CATEGORIES";
     public static readonly CATEGORY_RULES = "CATEGORY_RULES";
     public static readonly RECURRENT_TRANSACTIONS = "RECURRENT_TRANSACTIONS";

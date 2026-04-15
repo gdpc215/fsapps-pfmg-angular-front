@@ -5,6 +5,8 @@ import { SharedModule } from '../../../shared/shared.module';
 import { AccountDialogComponent } from './accounts/account-dialog/account-dialog.component';
 import { AccountsComponent } from './accounts/accounts.component';
 import { CheckpointDialogComponent } from './accounts/checkpoint-dialog/checkpoint-dialog.component';
+import { CycleClosingDateDialogComponent } from './accounts/cycle-closing-date-dialog/cycle-closing-date-dialog.component';
+import { CycleSummaryDialogComponent } from './accounts/cycle-summary-dialog/cycle-summary-dialog.component';
 import { CategoriesComponent } from './categories/categories.component';
 import { CategoryDialogComponent } from './categories/category-dialog/category-dialog.component';
 import { RulesDialogComponent } from './categories/rules-dialog/rules-dialog.component';
@@ -12,11 +14,16 @@ import { CategoryRulesComponent } from './category-rules/category-rules.componen
 import { ClearStorageComponent } from './clear-storage/clear-storage.component';
 import { CurrenciesComponent } from './currencies/currencies.component';
 import { CurrencyDialogComponent } from './currencies/currency-dialog/currency-dialog.component';
+import { DataManagementComponent } from './data-management/data-management.component';
 import { DuplicateDetectionRulesDialogComponent } from './duplicate-detection-rules/duplicate-detection-rules-dialog/duplicate-detection-rules-dialog.component';
 import { DuplicateDetectionRulesComponent } from './duplicate-detection-rules/duplicate-detection-rules.component';
 import { RecurrentTransactionDialogComponent } from './recurrent-transactions/recurrent-transaction-dialog/recurrent-transaction-dialog.component';
 import { RecurrentTransactionsComponent } from './recurrent-transactions/recurrent-transactions.component';
+import { ContributionDialogComponent } from './savings-goals/contribution-dialog/contribution-dialog.component';
+import { GoalDialogComponent } from './savings-goals/goal-dialog/goal-dialog.component';
+import { SavingsGoalsComponent } from './savings-goals/savings-goals.component';
 import { SettingsComponent } from './settings.component';
+import { SnapshotsComponent } from './snapshots/snapshots.component';
 
 const routes: Routes = [
   { path: '', component: SettingsComponent },
@@ -26,6 +33,9 @@ const routes: Routes = [
   { path: routectlg.SETTINGS_CATEGORY_RULES, component: CategoryRulesComponent },
   { path: routectlg.SETTINGS_RECURRENT_TRANSACTIONS, component: RecurrentTransactionsComponent },
   { path: routectlg.SETTINGS_DUPLICATE_DETECTION_RULES, component: DuplicateDetectionRulesComponent },
+  { path: routectlg.SETTINGS_SNAPSHOTS, component: SnapshotsComponent },
+  { path: routectlg.SETTINGS_SAVINGS_GOALS, component: SavingsGoalsComponent },
+  { path: routectlg.SETTINGS_DATA_MANAGEMENT, component: DataManagementComponent },
   { path: 'clear-storage', component: ClearStorageComponent }
 ];
 
@@ -36,20 +46,27 @@ const routes: Routes = [
     CurrencyDialogComponent,
     AccountsComponent,
     AccountDialogComponent,
-    CheckpointDialogComponent,
     CategoriesComponent,
     CategoryDialogComponent,
     RulesDialogComponent,
     CategoryRulesComponent,
     RecurrentTransactionsComponent,
     RecurrentTransactionDialogComponent,
+    SnapshotsComponent,
     DuplicateDetectionRulesComponent,
     DuplicateDetectionRulesDialogComponent,
-    ClearStorageComponent
+    ClearStorageComponent,
+    SavingsGoalsComponent
   ],
   imports: [
     SharedModule,
-    RouterModule.forChild(routes)
+    RouterModule.forChild(routes),
+    CycleClosingDateDialogComponent,
+    CycleSummaryDialogComponent,
+    CheckpointDialogComponent,
+    GoalDialogComponent,
+    ContributionDialogComponent,
+    DataManagementComponent
   ]
 })
 export class SettingsModule { }

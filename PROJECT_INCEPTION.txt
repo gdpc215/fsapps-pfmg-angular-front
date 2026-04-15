@@ -1,0 +1,2331 @@
+Act as a professional project analyst, and help me define the scope, processes, requirements and outputs needed for a document outlining everything needed for a set of AI agents to build it. Ask me anything and all the times needed to have it crystal clear, don't assume anything, and don't hallucinate.
+My project is for now, a purely front angular app that I want to use to manage my finances. I have several accounts (trxs in single currency) and credit cards (trxs in double currency, PEN and USD, but the credit line is only in PEN), and I can export movements from the banking apps to feed it to this project, along with the balance in that exact moment; the idea is to load this multiple times a month to never miss a TRX (this is on me). Credit cards are special because on the cycle closing day, interest is charged like a movement not directly seen but calculable with the trxs and the balance difference between different days. I already have a logic to not load repeated transactions if they exist.
+There are also recurrent movements that I know exist, I can create them and should be 1)reminded if they're not automatic 2)be recognized by the system and if the corresponding movement is found by the description, marked as paid 3) linked to an account or card.
+I also would like to have a budget where I track the expenses, have also saving goals and more  financial important info.
+
+That's all I can think right now, please help me clarify it to get to the final document 
+
+Good—this is a solid foundation. I’m going to treat this like a product + system specification discovery phase, not jump into solutions. The goal is to converge toward a document that AI agents could execute without ambiguity.
+
+I’ll structure this in two parts:
+
+What I understand so far (normalized)
+Systematic clarification questions (grouped, exhaustive, no assumptions)
+1. Current Understanding (Normalized Model)
+Core Objective
+
+A frontend-only Angular application to:
+
+Consolidate financial data from manual imports
+Track balances, expenses, and liabilities
+Detect patterns (recurring transactions)
+Provide budgeting + financial planning insights
+Key Domain Entities (as inferred)
+1. Financial Sources
+Accounts
+Single currency (likely PEN or USD)
+Credit Cards
+Transactions in PEN + USD
+Credit line in PEN only
+Billing cycle with closing date
+Hidden/implicit interest calculation
+2. Transactions (TRX)
+Imported manually (multiple times per month)
+Include:
+Amount
+Currency
+Date
+Description
+Balance snapshot (critical for reconciliation)
+Deduplication logic exists
+3. Recurring Movements
+User-defined expected transactions
+Behaviors:
+Reminder if unpaid
+Auto-match against imported TRXs
+Linked to account/card
+4. Financial Tracking Layers
+Budgeting
+Expense tracking
+Savings goals
+Possibly net worth evolution
+5. Special Logic
+Credit card interest:
+Not explicitly present in imports
+Derived from:
+Balance deltas
+Transactions
+Cycle boundaries
+2. Clarification Questions (Critical)
+
+I will not proceed to define requirements until these are answered. Some of these may feel granular—that’s intentional to avoid rework later.
+
+A. Data Input & Normalization
+A1. Input Format
+What formats do bank exports come in?
+CSV, Excel, PDF?
+Are formats consistent per bank, or do they change?
+A2. Required Fields
+
+For each transaction, confirm exact availability:
+
+Date (transaction vs posting date?)
+Description (raw text)
+Amount
+Currency
+Balance after transaction (always present?)
+A3. Balance Snapshots
+You mentioned loading “balance at that exact moment”
+Is this:
+Included in the file?
+Or manually entered?
+A4. Multi-import Behavior
+If you import overlapping periods:
+Should newer data override older?
+Or just skip duplicates?
+B. Transaction Identity & Deduplication
+
+You said you already have logic—need precision:
+
+B1. Deduplication Key
+
+What defines a unique transaction?
+
+(date + amount + description)?
+Any bank-provided ID?
+B2. Edge Cases
+Same amount + same day + similar description → different transactions?
+How do you handle:
+Installments?
+Split payments?
+C. Credit Card Modeling (Critical Area)
+
+This is the most complex part and must be exact.
+
+C1. Structure
+
+For each credit card:
+
+Billing cycle:
+Fixed closing date? (e.g., 25th monthly)
+Payment due date?
+C2. Currency Handling
+Transactions can be:
+PEN
+USD
+Questions:
+Do banks convert USD → PEN in statements?
+Or do you track both independently?
+C3. Interest Calculation
+
+You said:
+
+“interest is charged like a movement not directly seen”
+
+Need clarity:
+
+Do you want:
+Exact replication of bank interest, or
+Estimated calculation
+What inputs do you have:
+Daily balance?
+Only snapshots?
+Interest rate?
+C4. Payment Allocation
+When you pay a credit card:
+Does payment reduce:
+PEN first?
+USD first?
+Proportional?
+D. Recurring Transactions
+D1. Definition Model
+
+What defines a recurring movement?
+
+Fixed amount?
+Variable amount with tolerance?
+D2. Matching Logic
+
+How should matching work:
+
+Exact string match?
+Fuzzy match?
+Regex-like rules?
+
+Example:
+
+"NETFLIX 12345" vs "NETFLIX.COM"
+
+D3. Frequency Types
+
+Which do you need:
+
+Monthly (fixed date)
+Monthly (e.g., last Friday)
+Weekly
+Custom intervals?
+D4. Failure Detection
+
+When do we trigger “not paid”:
+
+X days after expected date?
+Immediately?
+E. Budgeting System
+E1. Budget Structure
+Budget per:
+Category?
+Account?
+Global?
+E2. Categories
+Will categories be:
+User-defined?
+Predefined?
+Hierarchical?
+E3. Allocation Logic
+Budget resets:
+Monthly?
+Custom periods?
+E4. Overspending Handling
+Should system:
+Warn only?
+Block allocations?
+Suggest adjustments?
+F. Savings Goals
+F1. Goal Types
+Fixed target (e.g., 10,000 PEN)
+Time-based (e.g., by December)
+F2. Contribution Tracking
+Manual contributions?
+Auto-detected from transactions?
+F3. Source of Funds
+Linked to specific account?
+Or abstract pool?
+G. Data Persistence (Important constraint)
+
+You said:
+
+“purely front angular app”
+
+So:
+
+G1. Storage Mechanism
+
+Which do you expect:
+
+LocalStorage
+IndexedDB
+File-based (export/import JSON)
+G2. Portability
+Should user be able to:
+Export full state?
+Import later?
+G3. Multi-device
+Is cross-device sync required? (even manually)
+H. Analytics & Outputs
+
+What do you want to see, concretely:
+
+H1. Dashboards
+
+Select all that apply:
+
+Net worth over time
+Cash flow (income vs expenses)
+Category breakdown
+Credit card utilization
+Debt tracking
+H2. Time Views
+Daily
+Monthly
+Custom ranges
+H3. Forecasting
+
+Do you want:
+
+Projection of balances?
+Burn rate?
+Budget predictions?
+I. UX / Interaction Model
+I1. Import Flow
+Upload file → preview → confirm?
+Or auto-process immediately?
+I2. Error Handling
+What happens if:
+Format mismatch?
+Missing fields?
+I3. Manual Adjustments
+
+Can user:
+
+Edit transactions?
+Delete them?
+Merge/split?
+J. Constraints & Non-Goals
+
+Very important:
+
+J1. What you explicitly DO NOT want
+
+Examples:
+
+No backend ever?
+No bank integrations?
+No real-time sync?
+J2. Performance Expectations
+Number of transactions expected:
+Hundreds?
+Thousands?
+Tens of thousands?
+Next Step
+
+Answer these in as much detail as possible. You don’t need perfect answers—partial clarity is fine, but avoid “whatever works”.
+
+Once we lock this:
+
+I’ll produce a formal system specification document including:
+Domain model
+Data schemas
+Processing pipelines
+Matching algorithms
+State management strategy (Angular-specific)
+AI-agent-ready execution plan
+
+No guessing, no gaps.
+
+A1. Excel, formats vary when account or cards, but not across banks
+A2. Balance is present on each snapshot. The way I want to do it is: download the excel files with the 4 first fields you mentioned, and then a screenshot of the main page of the bank with the balances of all accounts and cards.
+A3. A screenshot as stated before
+A4. The logic to manage this overlapping transactions is already defined. Let's dive into this later.
+B1. First one, there's no unique Id on the card movements, but there's one on the accounts
+B2. This has to be with the logic to manage overlapping transactions, let's dive it later
+B3. Don't include this
+C1. Fixed both
+C2. It's converted, there should be a section where to include the convention rate for the day
+C3. I just want an estimate of the amount of interest charged that cycle. I used to calculate it by subtracting the balance of any day after the cycle, any day before the cycle and the sum of the movements. The difference is the estimate of the interest charged. This is enough for me, to add it as a TRX the day of the cycle closure.
+C4. Usd TRX should be substracted from the credit line converted to PEN. The payment should only affect the credit line in PEN 
+D1. A fixed amount 
+D2. Should be a "contains.." string comparison. I'd give the root string and if a description contains it, it should mark it. Your example is good.
+D3. All of those
+D4. X days after expected date 
+E1. For now, global
+E2. Predefined
+E3. Monthly
+E4. Warn only
+F1. Fixed
+F2. Manual
+F3. This is not clear, explain
+G1. I'll eventually want a more solid persistence (a database on a backend) but for now I want to build it only on the front. So make it local storage with the ability to download/upload a Json to persist what has been loaded so far.
+G2. Be able to export and import, yes
+G3. Not now
+H. No analytics for now
+I1. With preview 
+I2.fail entirely 
+I3.yes, all editable
+J1. No integration, no real time sync. This is meant to be simple 
+J2. Thousand, don't think we're making more than 10 thousands 
+
+Any more questions?
+
+Yes—this is now well-defined at a high level. You’ve reduced ambiguity significantly. What remains are edge conditions, data contracts, and behavioral rules that will determine whether this system is robust or fragile.
+
+I’ll focus only on what is still unclear or under-specified, grouped by criticality.
+
+🔴 1. CRITICAL GAPS (Must be resolved before spec)
+1.1 Screenshot → Balance Extraction
+
+You said:
+
+“a screenshot of the main page of the bank with the balances”
+
+This introduces a non-trivial dependency: OCR or manual input.
+
+Question:
+
+How do you want to extract balances from the screenshot?
+
+Choose one:
+
+Option A — Manual Input (recommended for v1)
+User sees screenshot
+Inputs balances manually into UI
+Option B — Semi-automated
+Upload screenshot
+System assists (future OCR / AI agent)
+Option C — Full automation (NOT trivial)
+AI parses screenshot automatically
+
+👉 Which option are you choosing for v1?
+
+1.2 Balance Snapshot Semantics
+
+You said:
+
+“balance in that exact moment”
+
+Question:
+
+What exactly does a snapshot represent?
+
+Is it:
+A point-in-time absolute balance per account/card?
+Or tied to a specific date/time?
+Follow-up:
+Do we store:
+One global snapshot (all accounts at once)?
+Or independent snapshots per account?
+1.3 Time & Ordering Consistency
+
+Transactions + snapshots require strict ordering.
+
+Questions:
+Do transactions include time, or only date?
+If only date:
+How do we order multiple transactions on same day?
+Or does order not matter?
+1.4 Currency Normalization Strategy
+
+You said:
+
+“conversion rate for the day”
+
+Questions:
+Is the rate:
+Manually input per import?
+Or stored historically per day?
+If importing multiple times per month:
+Same day → same rate?
+Or user can override?
+
+👉 This affects determinism of calculations
+
+1.5 Credit Card Interest Calculation Boundaries
+
+Your formula:
+
+balance_after - balance_before - sum(transactions)
+
+Missing precision:
+Questions:
+Which exact days define:
+“before cycle”
+“after cycle”
+
+Example:
+
+Before = last snapshot before closing date?
+After = first snapshot after closing date?
+Edge case:
+What if:
+No snapshot exists exactly near those dates?
+🟠 2. DATA MODEL PRECISION
+2.1 Account vs Credit Card Abstraction
+Question:
+
+Do you want:
+
+A single unified entity (FinancialSource)
+Or separate:
+Account
+CreditCard
+
+👉 Recommendation is unified with subtype—but I won’t assume.
+
+2.2 Transaction Types
+
+Do you want explicit types?
+
+Examples:
+
+Income
+Expense
+Transfer
+Payment (credit card)
+Interest (generated)
+
+Or:
+
+Everything inferred from sign (+/-)
+2.3 Transfers Between Accounts
+
+Critical missing piece.
+
+Question:
+
+If you move money between your own accounts:
+
+Should it:
+Count as expense? (incorrect financially)
+Be neutral (transfer)?
+
+👉 If yes, we need transfer detection or manual linking
+
+2.4 Editing Transactions
+
+You said everything is editable.
+
+Clarify:
+Can user modify:
+Amount?
+Date?
+Description?
+Source account?
+If edited:
+Does it break deduplication lock?
+Or create a “manual override” flag?
+🟡 3. RECURRING LOGIC EDGE CASES
+3.1 Matching Conflicts
+
+If multiple TRXs match the same recurring rule:
+
+Example:
+
+Two Netflix charges in same month
+Question:
+Match:
+First only?
+All?
+Flag conflict?
+3.2 Partial Matches
+
+Example:
+
+Expected: 50 PEN
+Actual: 49.90 PEN
+Question:
+Do we allow tolerance?
+Yes / No
+If yes → what % or amount?
+3.3 Recurring Without Match
+
+You said:
+
+remind after X days
+
+Question:
+Should it:
+Stay “pending” indefinitely?
+Or expire after period?
+🟢 4. IMPORT PIPELINE BEHAVIOR
+4.1 Validation Rules
+
+You said:
+
+“fail entirely”
+
+Clarify:
+
+What counts as failure?
+
+Missing column?
+Invalid number?
+Duplicate headers?
+
+👉 Need strict validation contract
+
+4.2 Preview Step
+Question:
+
+What should preview allow?
+
+Only visualization?
+Or:
+Edit before confirming?
+Remove rows?
+4.3 Partial Imports
+
+If 1 row is invalid:
+
+Reject entire file? (current answer suggests yes)
+Or allow user to fix inline?
+🔵 5. SAVINGS GOALS (Clarification you requested)
+
+You said:
+
+“F3 not clear”
+
+Here are the models:
+
+Option A — Virtual Tracking (simplest)
+Goal is just a counter
+You manually log contributions
+No link to real accounts
+Option B — Linked to Account
+Contributions come from specific account
+Reduces available balance
+Option C — Envelope Model (advanced)
+Money is “reserved” inside accounts
+Requires allocation logic
+
+👉 For your current scope, Option A is sufficient
+
+Question:
+
+Which do you want?
+
+⚪ 6. SCALE & PERFORMANCE (Angular-specific)
+
+Given:
+
+up to ~10k transactions
+
+Question:
+
+Do you expect:
+
+Heavy filtering/search?
+Or mostly static viewing?
+
+This affects:
+
+State management (NgRx vs simple service)
+Indexing strategy
+🧩 7. FUTURE-PROOFING (Last Check)
+
+These are optional but important to decide now:
+
+7.1 Categories (even if not used yet)
+Should transactions store category now?
+7.2 Tags
+Do you want free-form tagging?
+7.3 Multi-currency accounts (future)
+Or strictly:
+Accounts = single currency forever?
+Next Step
+
+Once you answer this round, I will produce:
+
+📄 Final Deliverable
+
+A complete AI-agent-ready specification, including:
+
+Domain model (entities + relationships)
+JSON schemas
+Import pipeline design
+Matching algorithms (recurring, dedup, interest)
+State management architecture (Angular)
+Storage model (local + export/import)
+Deterministic processing flows
+
+No placeholders, no ambiguity.
+
+Take your time—precision here saves you from redesign later.
+
+1.1  to make it simple, I'll type the balances. Don't include ice
+1.2 the balances for any given date/time. Store all the snapshots per account individually
+1.3 no, only date. Order does not matter honestly 
+1.4 ask me for the rate of the day I'm uploading the snapshot. That rate should cover all the USD transactions uploaded, and those trx should remember that rate.
+1.5 your example is correct. If there's no snapshot like your edge case, force me to add a snapshot within that time period before adding the newest.
+2.1 you recommended is ok
+2.2 yes, give me explicit types, editable by me
+2.3 transfer detection
+2.4 editable, create a manual override 
+3.1 flag the conflict and allow me to fix it manually 
+3.2 10% tolerance 
+3.3 pending indefinitely 
+4.1 all of those. I should define a structure per account, it should fail if the file does not match or finds invalid characters 
+4.2 edit before confirm 
+4.3 reject file
+5.1 option a
+6.1 yes I want filtering 
+7.1 about categories, on the import view I should be able to add a custom category and description, additional to the data from the bank. I already have this implemented on another site and I can give you the code for you to parse it and understand. 
+7.2 related to above
+7.3 strictly single currency 
+
+Any more questions?
+
+At this point, the system is sufficiently specified to move into a formal, implementation-ready specification. There are no blocking ambiguities left—only optional enhancements that can be deferred.
+
+I will proceed to structure this as a clean, AI-agent-consumable system document.
+
+📄 SYSTEM SPECIFICATION — Personal Finance Angular App (v1)
+1. System Scope
+Objective
+
+A frontend-only Angular application to:
+
+Ingest financial data via manual imports
+Maintain consistent historical state
+Track balances, transactions, and obligations
+Detect recurring patterns
+Provide structured financial tracking (non-analytical for v1)
+2. Core Architectural Constraints
+Frontend-only (Angular)
+No backend (v1)
+Persistence via:
+localStorage (primary)
+JSON export/import (backup & portability)
+Deterministic processing (no external dependencies)
+3. Domain Model
+3.1 FinancialSource (Unified Model)
+FinancialSource {
+  id: string
+  name: string
+  type: 'ACCOUNT' | 'CREDIT_CARD'
+  currency: 'PEN' | 'USD' (accounts only)
+  
+  // Credit card specific
+  closingDay?: number (1–31)
+  dueDay?: number (1–31)
+  creditLinePen?: number
+}
+3.2 Transaction
+Transaction {
+  id: string
+  sourceId: string
+  
+  date: string (YYYY-MM-DD)
+  amount: number
+  currency: 'PEN' | 'USD'
+  
+  description: string (raw bank value)
+  userDescription?: string
+  category?: string
+  
+  type: 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'PAYMENT' | 'INTEREST'
+  
+  exchangeRate?: number (if USD)
+  amountPen?: number (normalized)
+  
+  isManualOverride: boolean
+  
+  recurringMatchId?: string
+}
+3.3 BalanceSnapshot
+BalanceSnapshot {
+  id: string
+  sourceId: string
+  
+  datetime: string (ISO)
+  balance: number
+  currency: 'PEN' | 'USD'
+  
+  exchangeRate?: number (if USD → PEN reference)
+}
+3.4 RecurringRule
+RecurringRule {
+  id: string
+  
+  name: string
+  matchString: string (contains logic)
+  
+  expectedAmount: number
+  tolerance: number (fixed: 10%)
+  
+  frequency: 'MONTHLY' | 'WEEKLY' | 'CUSTOM'
+  dayOfMonth?: number
+  dayOfWeek?: number
+  
+  sourceId: string
+  
+  lastMatchedDate?: string
+}
+3.5 SavingsGoal
+SavingsGoal {
+  id: string
+  
+  name: string
+  targetAmount: number
+  currentAmount: number
+  
+  contributions: {
+    date: string
+    amount: number
+  }[]
+}
+4. Import Pipeline
+4.1 Input Requirements
+
+Each file must contain:
+
+date
+description
+amount
+currency
+
+Strict validation:
+
+Exact column structure per source
+Reject if:
+Missing columns
+Invalid data types
+Unexpected format
+4.2 Import Flow
+Upload file
+Parse & validate
+Ask for:
+Exchange rate (if USD present)
+Display preview:
+Editable fields:
+category
+userDescription
+type
+Confirm import
+Process:
+Deduplication
+Normalization
+Matching
+4.3 Deduplication
+Rules:
+Accounts → use bank ID if available
+
+Credit cards → composite key:
+
+(date + amount + description)
+Behavior:
+Skip duplicates (do not overwrite)
+Manual edits do not affect dedup logic
+5. Balance Snapshot System
+5.1 Behavior
+Snapshots are:
+Per source
+Point-in-time
+User inputs manually
+5.2 Constraints
+Required for:
+Credit card interest calculation
+System must:
+Block operations if required snapshots missing
+6. Credit Card Logic
+6.1 Currency Handling
+All USD transactions:
+Converted using import-time exchange rate
+Stored with:
+original USD
+rate
+PEN equivalent
+6.2 Credit Line
+Always in PEN
+USD impacts via conversion
+6.3 Interest Calculation
+Formula:
+interest =
+(balance_after_cycle)
+- (balance_before_cycle)
+- sum(transactions_in_cycle)
+Rules:
+Use:
+Last snapshot before closing date
+First snapshot after closing date
+If missing:
+Block and require snapshot
+Output:
+
+Auto-generated transaction:
+
+type: 'INTEREST'
+date: closingDate
+7. Recurring Matching Engine
+7.1 Matching Rule
+
+A transaction matches if:
+
+description.includes(matchString)
+AND amount within ±10%
+7.2 Conflict Handling
+Multiple matches:
+Flag as conflict
+Require manual resolution
+7.3 Lifecycle
+If not matched:
+Remains pending indefinitely
+Reminder triggered after X days
+8. Transfer Detection
+8.1 Detection Logic
+
+Heuristic:
+
+Same amount
+Close dates
+Opposite signs
+Different sources
+8.2 Behavior
+
+Mark both as:
+
+type: TRANSFER
+Excluded from expense calculations (future-proofing)
+9. Editing & Overrides
+9.1 Editable Fields
+All transaction fields
+9.2 Override Flag
+
+Any edit sets:
+
+isManualOverride = true
+9.3 Effects
+Prevents:
+Auto-rematching
+Reprocessing
+10. Categories & Tagging
+10.1 Categories
+Predefined list
+Can assign during import
+10.2 User Fields
+category
+userDescription
+11. Storage Model
+11.1 Local Storage Structure
+{
+  sources: FinancialSource[]
+  transactions: Transaction[]
+  snapshots: BalanceSnapshot[]
+  recurringRules: RecurringRule[]
+  savingsGoals: SavingsGoal[]
+}
+11.2 Export / Import
+Full state JSON
+Import replaces or merges (define mode later)
+12. Angular Architecture (Recommended)
+12.1 State Management
+
+Given:
+
+Filtering required
+~10k transactions
+
+👉 Use:
+
+NgRx or signal-based store (preferred modern Angular)
+12.2 Modules
+Import Module
+Transactions Module
+Recurring Module
+Snapshots Module
+Settings Module
+12.3 Services
+ImportService
+DeduplicationService
+MatchingService
+InterestCalculationService
+StorageService
+13. Performance Constraints
+Max ~10k transactions
+Must support:
+Filtering
+Sorting
+Use:
+Indexed structures in memory
+Avoid recomputation
+14. Explicit Non-Goals (v1)
+No bank integrations
+No real-time sync
+No analytics/dashboarding
+No multi-device sync
+No OCR
+15. AI Agent Implementation Units
+
+This is critical for your original goal.
+
+Agents can be split into:
+1. Data Model Agent
+Generates TS interfaces + validation schemas
+2. Import Pipeline Agent
+File parsing + validation + preview
+3. Matching Engine Agent
+Recurring + transfer detection
+4. Credit Card Engine Agent
+Interest + currency normalization
+5. State Management Agent
+Store + reducers/selectors
+6. UI Agent
+Angular components per module
+Final Check
+
+There are no blockers left.
+
+Only optional improvements remain (future phases), such as:
+
+Category auto-suggestion
+Smarter matching (fuzzy)
+Analytics layer
+If you want next step:
+
+I can now:
+
+Break this into a full Angular project structure (folders + files)
+Generate base TypeScript models + services
+Or go deeper into one critical module (e.g., import pipeline or matching engine)
+
+Tell me how you want to proceed.
+
+src.zip
+Zip Archive
+This is the code i've implemented so far. it has the duplicate detection logic i told you. what can you say about the implementation versus what we've documented so far?
+
+This is a good implementation, and more importantly, it shows you’ve already solved some of the hardest parts (especially duplicate detection). But there are clear mismatches, hidden risks, and opportunities to align it with the spec we just defined.
+
+I’ll break this down into:
+
+What you did very well (keep as-is or reuse)
+Where it diverges from the defined system
+Design risks / technical debt
+Concrete refactor recommendations (high value)
+Verdict: reuse vs rebuild
+✅ 1. What You Did Well (Strong Alignment)
+1.1 Duplicate Detection — This is solid
+
+Your implementation is better than what we initially specified.
+
+You added:
+Multi-level detection:
+CONFIRMED
+POTENTIAL
+NONE
+Smart logic:
+Currency-aware
+Date tolerance (±3 days for USD)
+Description normalization
+Fallback rules engine
+
+This is production-grade logic, not a toy solution.
+
+Especially strong:
+existingDescNorm.includes(importedDescNorm)
+|| importedDescNorm.includes(existingDescNorm)
+
+This directly aligns with your requirement:
+
+“contains string matching”
+
+But improves it with bidirectional containment, which is correct.
+
+1.2 Rule-based normalization (very good abstraction)
+DuplicateDetectionRule {
+  descriptionGroup: string[]
+  accountType
+  currencies
+}
+
+This is much more powerful than the spec, because:
+
+It allows semantic grouping (e.g., "UBER", "UBER EATS")
+It decouples logic from hardcoded strings
+
+👉 Keep this. It’s a differentiator.
+
+1.3 Account-scoped storage
+MovementsByAccount {
+  [accountId]: Movement[]
+}
+
+This aligns well with:
+
+Snapshot-per-account model
+Future performance optimization
+1.4 Batch balance updates
+
+This is a very good design decision:
+
+const balanceChanges = new Map<string, number>();
+
+You avoided:
+
+Repeated writes
+Inconsistent intermediate states
+⚠️ 2. Misalignment with the Spec
+
+These are important.
+
+2.1 ❌ You are mutating balances directly (BREAKS YOUR FUTURE MODEL)
+this.accountService.updateBalance(accountId, amount);
+Problem:
+
+Your spec defines:
+
+balances come from snapshots
+
+But your code:
+
+Treats balance as incremental state
+Why this is dangerous:
+Breaks:
+Credit card interest calculation
+Historical reconstruction
+Introduces:
+Drift if one movement is wrong
+
+👉 Spec requires:
+
+Transactions = source of truth
+Snapshots = checkpoints
+Balance = computed, NOT mutated
+2.2 ❌ No snapshot system
+
+Your current implementation:
+
+Has no concept of:
+BalanceSnapshot
+Time-based reconciliation
+
+👉 This is a major missing pillar
+
+2.3 ❌ Currency normalization missing
+
+You currently:
+
+Compare amount directly
+Use currency only as filter
+
+But spec requires:
+
+amountPen
+exchangeRate
+Impact:
+Credit card logic will break
+Transfers across currencies impossible
+2.4 ⚠️ Deduplication is more complex than your spec (in a risky way)
+
+Your logic includes:
+
+±3 days tolerance
+Description heuristics
+
+But your spec defined:
+
+(date + amount + description)
+
+Problem:
+You’ve already introduced non-determinism
+This can:
+Hide real duplicates
+Create false positives
+
+👉 This is powerful, but needs control flags
+
+2.5 ❌ No “manual override protection”
+
+Spec says:
+
+manual edits should block reprocessing
+
+Your code:
+
+Does not check isManualOverride in duplicate logic
+
+👉 This will cause:
+
+Re-matching
+Unexpected overrides
+2.6 ⚠️ Movement model is underspecified
+
+From usage:
+
+movement.accountOrCardId
+movement.bankDescription
+movement.operationNumber
+
+But missing:
+
+exchangeRate
+amountPen
+recurringMatchId
+isManualOverride (not enforced)
+🚨 3. Design Risks
+3.1 Balance Drift (Most Critical)
+
+Because of:
+
+updateBalance(...)
+
+You risk:
+
+Irreversible inconsistencies
+Impossible debugging later
+3.2 Hidden Coupling Between Services
+MovementService → AccountService
+
+This creates:
+
+Side effects on every operation
+Hard-to-test flows
+3.3 Duplicate Logic is Embedded, Not Modular
+
+Right now:
+
+It lives inside MovementService
+
+But per spec:
+
+Should be a dedicated engine
+3.4 No Clear Import Pipeline Boundary
+
+Duplicate logic is:
+
+Mixed with storage logic
+
+👉 This prevents:
+
+Preview correctness
+Dry-run validation
+🔧 4. Recommended Refactor (High ROI)
+4.1 Introduce a “Processing Layer” (Critical)
+
+Create:
+
+ImportProcessingService
+
+Responsibilities:
+
+Deduplication
+Matching
+Validation
+
+👉 MovementService should ONLY persist
+
+4.2 Remove Balance Mutation
+
+Replace:
+
+updateBalance(...)
+
+With:
+
+Derived balance:
+
+sum(transactions) + snapshot baseline
+4.3 Extract Duplicate Engine
+
+Move this into:
+
+DuplicateDetectionService
+
+So it becomes:
+
+Stateless
+Testable
+Reusable in preview
+4.4 Add Currency Normalization Layer
+
+At import time:
+
+if USD:
+  movement.amountPen = amount * rate
+
+Store both.
+
+4.5 Add Manual Override Guard
+
+Before any auto logic:
+
+if (movement.isManualOverride) return
+4.6 Introduce Snapshot Model
+
+New service:
+
+SnapshotService
+
+Used for:
+
+Interest calculation
+Validation constraints
+🧠 5. Strategic Insight (Important)
+
+Your current system is:
+
+Mutation-based ledger
+
+But your spec requires:
+
+Event-sourced + snapshot hybrid
+
+This is a fundamental shift, not a small refactor.
+
+🧾 Final Verdict
+What to KEEP
+Duplicate detection logic ✅ (very strong)
+Rule system ✅
+Angular structure ✅
+Import UI patterns ✅
+What to REWRITE / ADAPT
+Balance handling ❌
+Data model ❌
+Processing pipeline ❌
+Currency handling ❌
+🔚 Bottom Line
+
+You are ~60–70% aligned conceptually, but:
+
+Your core engine (balances + state) is incompatible with your future requirements
+Your duplicate logic is ahead of your architecture
+If you want next step
+
+I recommend:
+
+👉 I refactor your current implementation into:
+
+Proper layered architecture
+Reusable services
+Compatible with your spec
+
+OR
+
+👉 Focus only on:
+
+Import pipeline redesign (highest impact)
+
+Tell me which path you want.
+
+A reflexion: the behaviour of the transactions is a bit peculiar: if I make a purchase on a international store like Amazon, the transaction can appear but it will only be confirmed later on, if i store the snapshot between the transaction date and the posting date, I'll have the first transaction, but loading after the posting date will give me a very similar transaction (and the first one will not be on the list). there are other transaction behaviours that are complex
+
+hence, what i used to do for transaction matching is specified on the code of the app. I really want to keep that logic, because it behaves exactly like i want to.
+
+What you should do is extract the logic from the implementation, especially the dupe transaction detection, and add it to the spec we've been working
+
+That’s a very important clarification—and it validates why your current implementation is more sophisticated than the initial spec.
+
+What you’re describing is essentially transaction lifecycle instability:
+
+Pending → Posted → Disappearing/Replaced entries
+No stable IDs (especially on credit cards)
+Bank exports are not append-only, but state snapshots
+
+👉 This means:
+Your duplicate detection is not just deduplication — it is reconciliation logic.
+
+So instead of simplifying it, we should promote your implementation into a first-class subsystem in the spec.
+
+📄 SPEC UPDATE — Transaction Reconciliation & Duplicate Detection Engine
+
+This replaces and expands previous “deduplication” sections.
+
+1. Conceptual Model
+1.1 Problem Definition
+
+Bank transaction data is non-deterministic across imports:
+
+Observed behaviors:
+Transactions appear as pending, then:
+Change description
+Change amount (FX adjustments)
+Disappear and reappear as final
+Same logical transaction may appear as:
+Different rows across imports
+With no shared identifier
+1.2 System Requirement
+
+The system must:
+
+Detect:
+Confirmed duplicates
+Potential duplicates
+Prevent:
+Double counting
+Preserve:
+User intent
+Allow:
+Manual resolution when ambiguous
+2. Duplicate Detection Engine
+2.1 Output Model
+DuplicateCheckResult {
+  status: 'CONFIRMED' | 'POTENTIAL' | 'NONE'
+  matchedMovement?: Transaction
+  confidenceScore?: number
+}
+2.2 Matching Strategy (Multi-layered)
+
+The system evaluates matches in priority order:
+
+Layer 1 — Strong Identifier Match (Accounts only)
+if (operationNumber exists):
+  match by operationNumber
+Output:
+status = CONFIRMED
+Layer 2 — Exact Structural Match
+same date
+AND same amount
+AND normalized description equal
+Output:
+status = CONFIRMED
+Layer 3 — Rule-Based Semantic Match
+
+Uses:
+
+DuplicateDetectionRule {
+  descriptionGroup: string[]
+  accountType?: string
+  currencies?: string[]
+}
+Matching logic:
+Normalize descriptions
+Check if both descriptions belong to same descriptionGroup
+group.includes(desc1) && group.includes(desc2)
+Output:
+If amount equal → CONFIRMED
+Else → POTENTIAL
+Layer 4 — Heuristic Match (Flexible Matching)
+Conditions:
+4.1 Description Similarity
+desc1.includes(desc2) || desc2.includes(desc1)
+4.2 Date Tolerance
+Same date OR
+Within ±3 days (for unstable transactions like FX)
+4.3 Amount Comparison
+Exact match → strong signal
+Otherwise:
+Within tolerance (optional future)
+FX-adjusted comparison (if USD)
+Output:
+Condition Strength	Result
+High	CONFIRMED
+Medium	POTENTIAL
+Weak	NONE
+2.3 Currency-Aware Matching
+
+When currencies differ:
+
+compare using amountPen
+
+Where:
+
+amountPen = amount * exchangeRate
+2.4 Confidence Scoring (Implicit)
+
+Even if not exposed, logic implies:
+
+Strong match → CONFIRMED
+Ambiguous → POTENTIAL
+
+This is intentional and correct
+
+3. Import Reconciliation Behavior
+3.1 For Each Imported Transaction
+
+Run:
+
+checkDuplicate(imported, existing[])
+3.2 Decision Matrix
+Case 1 — CONFIRMED
+Do NOT insert new transaction
+Optionally:
+Update existing (future enhancement)
+Log match
+Case 2 — POTENTIAL
+Flag for user review
+Do NOT auto-insert or auto-reject
+UI must allow:
+Accept as new
+Merge with existing
+Case 3 — NONE
+Insert as new transaction
+4. Handling Pending → Posted Transitions
+
+This is the key addition from your insight.
+
+4.1 Expected Behavior
+
+When:
+
+A pending transaction disappears
+A new similar transaction appears
+
+System should:
+
+Detect as:
+
+CONFIRMED or POTENTIAL duplicate
+Avoid double insertion
+4.2 Non-Requirement (Important)
+
+System does NOT need to explicitly model “pending” state
+
+Instead:
+
+Matching engine implicitly handles lifecycle
+5. Interaction with Manual Overrides
+Rule:
+if existingTransaction.isManualOverride:
+  do not auto-match against it
+Rationale:
+User intent must override automation
+6. Interaction with Snapshots
+Important Clarification
+
+Duplicate detection:
+
+Is independent of snapshots
+
+Snapshots:
+
+Used for:
+Interest calculation
+Validation
+7. Constraints & Guarantees
+Guarantees
+No duplicate transactions inserted when:
+High-confidence match exists
+Ambiguity always surfaced to user
+Non-Guarantees
+100% accuracy (by design)
+Deterministic matching across all edge cases
+
+👉 System is heuristic + user-correctable
+
+8. Implementation Boundary (Updated Architecture)
+New Dedicated Service
+DuplicateDetectionService
+
+Responsibilities:
+
+Stateless matching
+Rule evaluation
+Heuristic evaluation
+Input
+(importedTransaction, existingTransactions)
+Output
+DuplicateCheckResult
+9. Key Insight (Architectural Upgrade)
+
+Your system is NOT:
+
+“Import + deduplicate”
+
+It is:
+
+“Import + reconcile evolving financial state”
+
+This is a fundamentally more advanced model.
+
+Final Assessment
+
+Your implementation:
+
+✅ Already solves real-world banking inconsistencies
+✅ Is more advanced than typical finance apps
+❗ Just needs:
+Proper isolation
+Alignment with snapshot-based balance system
+Next Step (Recommended)
+
+Now that this is formalized, the highest leverage move is:
+
+👉 I extract your exact duplicate detection logic into:
+
+A clean, framework-agnostic service
+Fully aligned with this spec
+Ready to plug into Angular
+
+OR
+
+👉 We move to:
+
+Designing the import pipeline end-to-end with this reconciliation engine integrated
+
+Your call.
+
+Branched from Financial Management App Scope
+
+Considering the code imported and the specs already defined, layout the new full app logics here
+
+Now we’re at the right level of maturity to define the final system logic end-to-end, incorporating:
+
+Your existing implementation strengths (especially reconciliation logic)
+The spec we formalized
+The necessary architectural corrections (snapshots, no balance mutation, separation of concerns)
+
+This is not a summary—this is the execution blueprint an AI agent (or you) can build from without ambiguity.
+
+📄 FULL APPLICATION LOGIC — FINAL ARCHITECTURE (v1)
+1. SYSTEM PARADIGM (Core Shift)
+
+The system operates as:
+
+Event-based ledger + reconciliation engine + snapshot checkpoints
+
+Components:
+Transactions = events (source of truth)
+Snapshots = validation anchors
+Reconciliation engine = resolves inconsistencies across imports
+2. HIGH-LEVEL FLOW
+2.1 Import Lifecycle
+Diagram is not supported.
+3. CORE ENGINES
+3.1 ImportProcessingEngine (Orchestrator)
+Responsibility:
+
+Coordinates the entire pipeline.
+
+Input:
+(file, sourceId, exchangeRate?)
+Output:
+ProcessedImportResult {
+  newTransactions: Transaction[]
+  duplicates: DuplicateCheckResult[]
+  conflicts: Transaction[]
+}
+Execution Steps:
+Step 1 — Parse & Normalize
+
+For each row:
+
+ParsedTransaction {
+  date
+  amount
+  currency
+  description
+}
+Step 2 — Enrichment
+
+Add:
+
+sourceId
+exchangeRate (if USD)
+amountPen = amount * rate
+Default:
+type
+category
+Step 3 — Reconciliation (CRITICAL)
+
+For each parsed transaction:
+
+result = DuplicateDetectionService.check(imported, existing)
+Step 4 — Classification
+Result	Action
+CONFIRMED	Skip insertion
+POTENTIAL	Add to conflict queue
+NONE	Add to newTransactions
+Step 5 — User Resolution
+
+User resolves:
+
+POTENTIAL duplicates
+Step 6 — Persistence
+
+Persist only:
+
+Confirmed new transactions
+3.2 DuplicateDetectionEngine (Your Logic, Formalized)
+Key Properties:
+Stateless
+Deterministic per input set
+Multi-layered
+Matching Layers (Final)
+1. Operation Number Match
+
+→ CONFIRMED
+
+2. Exact Match
+date + amount + normalizedDescription
+
+→ CONFIRMED
+
+3. Rule-Based Match
+
+Using:
+
+DuplicateDetectionRule.descriptionGroup
+
+→ CONFIRMED / POTENTIAL
+
+4. Heuristic Match
+
+Conditions:
+
+Description containment (bidirectional)
+Date tolerance (±3 days)
+Currency-aware comparison
+
+→ CONFIRMED / POTENTIAL
+
+Output:
+DuplicateCheckResult {
+  status
+  matchedTransaction
+}
+Critical Rule:
+if existing.isManualOverride → exclude from matching
+3.3 TransactionStore (Pure Persistence Layer)
+Responsibilities:
+Store transactions
+No business logic
+No reconciliation
+No balance mutation
+Guarantees:
+Idempotent writes
+Immutable history (except manual edits)
+3.4 SnapshotEngine
+Purpose:
+
+Provide state checkpoints for:
+
+Credit card interest calculation
+Data consistency validation
+Rules:
+1. Snapshots are:
+Per source
+Timestamped
+User-input
+2. Required Constraints
+
+Before:
+
+Interest calculation
+Certain imports
+
+System enforces:
+
+exists(snapshot_before_closing_date)
+AND exists(snapshot_after_closing_date)
+3.5 CreditCardEngine
+3.5.1 Currency Normalization
+
+At import:
+
+amountPen = amount * exchangeRate
+
+Stored permanently.
+
+3.5.2 Credit Line Impact
+All transactions affect PEN-equivalent balance
+USD always converted
+3.5.3 Interest Calculation
+
+Core logic:
+
+𝐼
+=
+𝐵
+𝑎
+𝑓
+𝑡
+𝑒
+𝑟
+−
+𝐵
+𝑏
+𝑒
+𝑓
+𝑜
+𝑟
+𝑒
+−
+∑
+𝑇
+I=B
+after
+	​
+
+−B
+before
+	​
+
+−∑T
+
+Where:
+𝐵
+𝑏
+𝑒
+𝑓
+𝑜
+𝑟
+𝑒
+B
+before
+	​
+
+: last snapshot before closing date
+𝐵
+𝑎
+𝑓
+𝑡
+𝑒
+𝑟
+B
+after
+	​
+
+: first snapshot after closing date
+∑
+𝑇
+∑T: sum of all transactions in cycle
+Output:
+Transaction {
+  type: 'INTEREST'
+  date: closingDate
+  amount: I
+}
+3.5.4 Validation Rule
+
+If snapshots missing:
+→ Block operation
+
+3.6 RecurringEngine
+3.6.1 Matching
+if description.includes(matchString)
+AND amount within ±10%
+3.6.2 States
+MATCHED
+PENDING
+CONFLICT
+3.6.3 Behavior
+Auto-link when matched
+Flag multiple matches
+Pending indefinitely
+Reminder after X days
+3.7 TransferDetectionEngine
+Detection Heuristic:
+
+Two transactions:
+
+Same amount
+Opposite sign
+Close dates
+Different sources
+Action:
+type = TRANSFER
+link both transactions
+4. DATA FLOW (IMPORTANT)
+4.1 Write Flow
+
+ONLY this path can create transactions:
+
+ImportProcessingEngine → TransactionStore
+4.2 Read Flow
+
+All views derive from:
+
+transactions + snapshots
+4.3 Forbidden Flow ❌
+Transaction → updateBalance()
+
+This is eliminated.
+
+5. STATE MANAGEMENT (Angular)
+Recommended: Signal-based Store
+Structure:
+state = {
+  sources
+  transactions
+  snapshots
+  recurringRules
+  savingsGoals
+}
+Derived Selectors:
+Transactions by source
+Filtered transactions
+Cycle transactions
+Snapshot ranges
+6. UI MODULE LOGIC
+6.1 Import Module
+
+Capabilities:
+
+Upload file
+Preview parsed data
+Inline edit:
+category
+description
+type
+Show:
+duplicates
+conflicts
+6.2 Conflict Resolution UI
+
+User can:
+
+Accept as new
+Merge with existing
+Discard
+6.3 Snapshot Module
+Manual entry
+Per source
+Enforced when required
+6.4 Transactions Module
+Full edit capability
+Override flagging
+7. STORAGE MODEL
+LocalStorage Schema
+{
+  sources
+  transactions
+  snapshots
+  recurringRules
+  savingsGoals
+}
+Export / Import
+Full JSON dump
+Replace state on import (v1)
+8. SYSTEM INVARIANTS (CRITICAL)
+1. Transactions are immutable events
+
+(except manual override)
+
+2. No balance is stored as mutable state
+3. All USD must have exchangeRate
+4. Duplicate detection is always applied before persistence
+5. User intent overrides automation
+9. WHAT YOU ACHIEVED (Reframed)
+
+Your current implementation already contains:
+
+A reconciliation engine (rare in personal finance apps)
+A rule-based matching system
+Real-world handling of:
+Pending vs posted transactions
+FX inconsistencies
+10. FINAL ARCHITECTURAL INSIGHT
+
+This system is now:
+
+A deterministic financial reconstruction engine over inconsistent external data sources
+
+That’s significantly more advanced than:
+
+Mint-style trackers
+Simple CSV aggregators
+If you want next step
+
+We can now go one level deeper into execution:
+
+Option A
+
+👉 Generate Angular project structure + base services
+
+Option B
+
+👉 Fully implement:
+
+DuplicateDetectionService (clean, extracted from your code)
+Option C
+
+👉 Build:
+
+ImportProcessingEngine with all flows wired
+
+Given your current stage, I strongly recommend Option C.
+
+Generate here a specification with the logic definitions and modules, I want to review everything we've talked about to a granular detail, to see if anything should change to match my ideas of the app
+
+Understood. This will be a single, exhaustive, low-ambiguity specification that consolidates everything into a reviewable contract. No compression, no gaps.
+
+I’ll structure it as a system definition document with:
+
+Explicit logic
+Deterministic rules
+Module boundaries
+Data contracts
+Edge-case handling
+📄 FULL SYSTEM SPECIFICATION — PERSONAL FINANCE APP (v1)
+1. SYSTEM OVERVIEW
+1.1 Objective
+
+A frontend-only Angular application that:
+
+Ingests non-deterministic financial data exports
+Reconstructs a consistent financial ledger
+Tracks:
+Accounts
+Credit cards
+Transactions
+Recurring obligations
+Savings goals
+Uses:
+Reconciliation logic (core engine)
+User-controlled corrections
+1.2 Core System Paradigm
+
+The system is:
+
+Event-based ledger + heuristic reconciliation + snapshot validation
+
+1.3 Key Principles
+Transactions are the source of truth
+Bank data is inconsistent and non-idempotent
+Reconciliation is heuristic, not exact
+User input overrides automation
+System is fully deterministic after user resolution
+2. DOMAIN MODEL (FINAL)
+2.1 FinancialSource
+FinancialSource {
+  id: string
+  name: string
+  type: 'ACCOUNT' | 'CREDIT_CARD'
+
+  currency?: 'PEN' | 'USD' // only for accounts
+
+  // credit card only
+  closingDay?: number
+  dueDay?: number
+  creditLinePen?: number
+}
+2.2 Transaction
+Transaction {
+  id: string
+  sourceId: string
+
+  date: string // YYYY-MM-DD
+
+  amount: number
+  currency: 'PEN' | 'USD'
+
+  amountPen?: number
+  exchangeRate?: number
+
+  description: string
+  normalizedDescription: string
+
+  userDescription?: string
+  category?: string
+
+  type: 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'PAYMENT' | 'INTEREST'
+
+  operationNumber?: string
+
+  isManualOverride: boolean
+
+  recurringMatchId?: string
+
+  linkedTransactionId?: string // for transfers
+}
+2.3 BalanceSnapshot
+BalanceSnapshot {
+  id: string
+  sourceId: string
+
+  datetime: string // ISO
+
+  balance: number
+  currency: 'PEN' | 'USD'
+}
+2.4 RecurringRule
+RecurringRule {
+  id: string
+
+  name: string
+  matchString: string
+
+  expectedAmount: number
+  tolerance: number // fixed: 0.1
+
+  frequency: 'MONTHLY' | 'WEEKLY' | 'CUSTOM'
+
+  dayOfMonth?: number
+  dayOfWeek?: number
+
+  sourceId: string
+
+  lastMatchedDate?: string
+}
+2.5 SavingsGoal
+SavingsGoal {
+  id: string
+
+  name: string
+  targetAmount: number
+
+  contributions: {
+    date: string
+    amount: number
+  }[]
+}
+3. CORE MODULES
+3.1 ImportProcessingModule
+Responsibility
+
+Orchestrates full import lifecycle.
+
+Pipeline
+Step 1 — File Parsing
+
+Input:
+
+Excel file
+
+Output:
+
+ParsedRow {
+  date
+  description
+  amount
+  currency
+}
+Step 2 — Validation
+
+Fail entirely if:
+
+Missing required columns
+Invalid types
+Unexpected format
+Corrupt values
+Step 3 — Enrichment
+
+For each row:
+
+enriched = {
+  ...parsed,
+  sourceId,
+  normalizedDescription,
+  exchangeRate (if USD),
+  amountPen,
+  type (default EXPENSE unless positive),
+}
+Step 4 — Reconciliation
+result = DuplicateDetectionService.check(enriched, existingTransactions)
+Step 5 — Classification
+CONFIRMED → skip
+POTENTIAL → conflict queue
+NONE → candidate insert
+Step 6 — User Resolution
+
+User resolves:
+
+conflicts only
+Step 7 — Persistence
+
+Insert:
+
+only resolved + new
+3.2 DuplicateDetectionModule (CRITICAL)
+Purpose
+
+Resolve:
+
+duplicates
+pending vs posted transitions
+inconsistent bank exports
+Output
+DuplicateCheckResult {
+  status: 'CONFIRMED' | 'POTENTIAL' | 'NONE'
+  matchedTransaction?: Transaction
+}
+Pre-filter
+
+Exclude:
+
+if existing.isManualOverride → skip
+Matching Layers (in order)
+Layer 1 — Operation Number
+
+If both have:
+
+operationNumber === operationNumber
+
+→ CONFIRMED
+
+Layer 2 — Exact Match
+same date
+AND same amount
+AND normalizedDescription equal
+
+→ CONFIRMED
+
+Layer 3 — Rule-Based Matching
+
+Using:
+
+DuplicateDetectionRule {
+  descriptionGroup: string[]
+}
+
+Match if both descriptions belong to same group.
+
+→
+
+same amount → CONFIRMED
+else → POTENTIAL
+Layer 4 — Heuristic Matching
+Description Similarity
+desc1.includes(desc2) || desc2.includes(desc1)
+Date Tolerance
+Same date OR
+±3 days
+Amount Comparison
+Exact match OR
+PEN-normalized match
+Result
+Condition Strength	Output
+Strong	CONFIRMED
+Medium	POTENTIAL
+Weak	NONE
+3.3 TransactionModule
+Responsibility
+Store transactions
+Provide query access
+No logic
+Constraints
+No balance mutation
+No reconciliation
+3.4 SnapshotModule
+Behavior
+User inputs snapshots manually
+Stored per source
+Validation Rules
+
+Before:
+
+Credit card interest calculation
+
+Require:
+
+snapshot_before_closing
+AND snapshot_after_closing
+
+If missing → block
+
+3.5 CreditCardModule
+Currency Logic
+
+At import:
+
+amountPen = amount * exchangeRate
+
+Stored permanently.
+
+Interest Calculation
+
+𝐼
+=
+𝐵
+𝑎
+𝑓
+𝑡
+𝑒
+𝑟
+−
+𝐵
+𝑏
+𝑒
+𝑓
+𝑜
+𝑟
+𝑒
+−
+∑
+𝑇
+I=B
+after
+	​
+
+−B
+before
+	​
+
+−∑T
+
+Rules
+B_before = last snapshot before closing
+B_after = first snapshot after closing
+Sum = all transactions within cycle
+Output
+
+Create:
+
+Transaction {
+  type: 'INTEREST'
+}
+3.6 RecurringModule
+Matching
+description.includes(matchString)
+AND amount within ±10%
+Behavior
+Match → mark as paid
+Multiple matches → conflict
+No match → pending
+Pending persists indefinitely
+3.7 TransferDetectionModule
+Detection
+
+Two transactions:
+
+Same amount
+Opposite sign
+Close dates
+Different sources
+Result
+type = TRANSFER
+linkedTransactionId assigned
+4. EDITING LOGIC
+Editable Fields
+amount
+date
+description
+category
+type
+Rule
+
+Any edit:
+
+isManualOverride = true
+Effect
+Excluded from:
+duplicate detection
+recurring matching
+5. CATEGORY SYSTEM
+Behavior
+Predefined categories
+Assignable at import
+Editable later
+Storage
+
+Stored per transaction:
+
+category
+userDescription
+6. STORAGE
+Structure
+{
+  sources
+  transactions
+  snapshots
+  recurringRules
+  savingsGoals
+}
+Persistence
+localStorage (primary)
+JSON export/import
+7. UI LOGIC
+Import View
+Upload
+Preview
+Inline edit
+Duplicate detection visualization
+Conflict Resolution
+
+User chooses:
+
+Merge
+Accept new
+Discard
+Transactions View
+Full edit
+Filtering
+Snapshot View
+Manual entry
+8. SYSTEM INVARIANTS
+No duplicate insertion when CONFIRMED
+All USD transactions must have exchangeRate
+No balance stored as mutable state
+Snapshots required for credit card calculations
+Manual override blocks automation
+Import must be fully valid or rejected
+9. NON-GOALS
+No bank integrations
+No real-time sync
+No analytics (v1)
+No OCR
+No multi-device sync
+10. FINAL VALIDATION CHECK
+
+Before moving to implementation, validate:
+
+ Duplicate logic matches your current behavior exactly
+ Snapshot dependency feels correct (not intrusive)
+ Credit card interest estimation is sufficient
+ Manual override behavior is acceptable
+ Import flow UX is acceptable
+If anything feels off
+
+This is the moment to adjust.
+
+The only expensive changes later would be:
+
+Balance model
+Duplicate logic
+Currency handling
+
+Everything else is flexible.
+
+If you want next:
+I can convert this into:
+
+Angular folder structure + base code
+Or step-by-step build plan for AI agents

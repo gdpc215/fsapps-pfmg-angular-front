@@ -1,0 +1,23 @@
+<h2 mat-dialog-title>Estimate Cycle Interest — {{ data.accountName }}</h2>
+
+<mat-dialog-content>
+  <p class="mb-4 text-gray-600">
+    Select the billing cycle closing date. The system will use the snapshots
+    bracketing this date to estimate the interest charged.
+  </p>
+
+  <form [formGroup]="form" class="flex flex-col gap-4 mt-2">
+    <mat-form-field appearance="outline">
+      <mat-label>Cycle Closing Date</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="closingDate" placeholder="MM/DD/YYYY">
+      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+      <mat-error *ngIf="form.get('closingDate')?.hasError('required')">Closing date is required</mat-error>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSave()" [disabled]="form.invalid">Estimate</button>
+</mat-dialog-actions>

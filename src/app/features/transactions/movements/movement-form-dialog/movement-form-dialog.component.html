@@ -128,7 +128,7 @@
       </mat-chip-grid>
       <input placeholder="Add label..."
              [matChipInputFor]="chipGrid"
-             (matChipInputTokenEnd)="addLabel($event)"/>
+              (matChipInputTokenEnd)="addLabel($any($event))"/>
     </mat-form-field>
 
     <!-- Date & Time -->
@@ -167,6 +167,10 @@
         <mat-label>Payee</mat-label>
         <input matInput formControlName="payee" placeholder="Person or business">
       </mat-form-field>
+
+      <mat-checkbox formControlName="isManualOverride" class="mt-2">
+        Mark as manual override (exclude from automatic matching)
+      </mat-checkbox>
     </div>
 
   </form>

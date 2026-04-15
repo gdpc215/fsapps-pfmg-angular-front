@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 import { AccountService } from '../../../../logic/services/account.service';
@@ -9,8 +9,8 @@ import { RecurrentTransactionService } from '../../../../logic/services/recurren
 import { Account } from '../../../../logic/types/account';
 import { Category } from '../../../../logic/types/category';
 import { Currency } from '../../../../logic/types/currency';
-import { MovementType } from '../../../../logic/types/movement';
 import { ExecutionMode, RecurrenceType, RecurrentTransaction } from '../../../../logic/types/recurrent-transaction';
+import { TransactionType } from '../../../../logic/types/transaction';
 import { RecurrentTransactionDialogComponent } from './recurrent-transaction-dialog/recurrent-transaction-dialog.component';
 
 @Component({
@@ -19,23 +19,22 @@ import { RecurrentTransactionDialogComponent } from './recurrent-transaction-dia
   standalone: false
 })
 export class RecurrentTransactionsComponent implements OnInit {
+  private recurrentTransactionService = inject(RecurrentTransactionService);
+  private accountService = inject(AccountService);
+  private categoryService = inject(CategoryService);
+  private currencyService = inject(CurrencyService);
+  private movementService = inject(MovementService);
+
   recurrentTransactions$!: Observable<RecurrentTransaction[]>;
   accounts: Account[] = [];
   categories: Category[] = [];
   currencies: Currency[] = [];
   
   RecurrenceType = RecurrenceType;
-  MovementType = MovementType;
+  TransactionType = TransactionType;
   ExecutionMode = ExecutionMode;
 
-  constructor(
-    private recurrentTransactionService: RecurrentTransactionService,
-    private accountService: AccountService,
-    private categoryService: CategoryService,
-    private currencyService: CurrencyService,
-    private movementService: MovementService,
-    private dialog: MatDialog
-  ) {}
+  constructor(private dialog: MatDialog) {}
 
   ngOnInit(): void {
     this.recurrentTransactions$ = this.recurrentTransactionService.getRecurrentTransactions();
@@ -135,8 +134,8 @@ export class RecurrentTransactionsComponent implements OnInit {
 
   executeNow(rt: RecurrentTransaction): void {
     if (confirm(`Execute "${rt.name}" now?`)) {
-      const movement = this.recurrentTransactionService.toMovement(rt);
-      this.movementService.addMovement(movement);
+      const transaction = this.recurrentTransactionService.toTransaction(rt);
+      this.movementService.addMovement(transaction);
       this.recurrentTransactionService.markAsExecuted(rt.id);
     }
   }
@@ -175,8 +174,8 @@ export class RecurrentTransactionsComponent implements OnInit {
       const message = `${dueTransactions.length} recurrent transaction(s) are due. Execute them now?`;
       if (confirm(message)) {
         dueTransactions.forEach(rt => {
-          const movement = this.recurrentTransactionService.toMovement(rt);
-          this.movementService.addMovement(movement);
+          const transaction = this.recurrentTransactionService.toTransaction(rt);
+          this.movementService.addMovement(transaction);
           this.recurrentTransactionService.markAsExecuted(rt.id);
         });
       }

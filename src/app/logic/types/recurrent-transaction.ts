@@ -1,4 +1,4 @@
-import { MovementType } from './movement';
+import { TransactionType } from './transaction';
 
 export enum RecurrenceType {
   DAY_OF_MONTH = 'DAY_OF_MONTH',  // e.g., 2nd of each month
@@ -16,8 +16,8 @@ export class RecurrentTransaction {
   active: boolean;                // Whether this recurrence is enabled
   executionMode: ExecutionMode;   // Automatic or Manual execution
   
-  // Movement details (same as Movement)
-  type: MovementType;
+  // Transaction details
+  type: TransactionType;
   accountOrCardId: string;
   payee: string;
   description: string;
@@ -50,7 +50,7 @@ export class RecurrentTransaction {
     this.name = "";
     this.active = true;
     this.executionMode = ExecutionMode.MANUAL;
-    this.type = MovementType.EXPENSE;
+    this.type = TransactionType.EXPENSE;
     this.accountOrCardId = "";
     this.payee = "";
     this.description = "";

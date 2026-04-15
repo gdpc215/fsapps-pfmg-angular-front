@@ -46,24 +46,24 @@
     <!-- Movement Type Tabs -->
     <div class="flex gap-2 mb-4">
       <button type="button" mat-stroked-button 
-              [class.mat-flat-button]="form.get('type')?.value === MovementType.EXPENSE"
-              [color]="form.get('type')?.value === MovementType.EXPENSE ? 'warn' : ''"
+              [class.mat-flat-button]="form.get('type')?.value === TransactionType.EXPENSE"
+              [color]="form.get('type')?.value === TransactionType.EXPENSE ? 'warn' : ''"
               class="flex-1"
-              (click)="form.patchValue({type: MovementType.EXPENSE}); onTypeChange()">
+              (click)="form.patchValue({type: TransactionType.EXPENSE}); onTypeChange()">
         Expense
       </button>
       <button type="button" mat-stroked-button 
-              [class.mat-flat-button]="form.get('type')?.value === MovementType.INCOME"
-              [color]="form.get('type')?.value === MovementType.INCOME ? 'primary' : ''"
+              [class.mat-flat-button]="form.get('type')?.value === TransactionType.INCOME"
+              [color]="form.get('type')?.value === TransactionType.INCOME ? 'primary' : ''"
               class="flex-1"
-              (click)="form.patchValue({type: MovementType.INCOME}); onTypeChange()">
+              (click)="form.patchValue({type: TransactionType.INCOME}); onTypeChange()">
         Income
       </button>
       <button type="button" mat-stroked-button 
-              [class.mat-flat-button]="form.get('type')?.value === MovementType.TRANSFER"
-              [color]="form.get('type')?.value === MovementType.TRANSFER ? 'accent' : ''"
+              [class.mat-flat-button]="form.get('type')?.value === TransactionType.TRANSFER"
+              [color]="form.get('type')?.value === TransactionType.TRANSFER ? 'accent' : ''"
               class="flex-1"
-              (click)="form.patchValue({type: MovementType.TRANSFER}); onTypeChange()">
+              (click)="form.patchValue({type: TransactionType.TRANSFER}); onTypeChange()">
         Transfer
       </button>
     </div>
@@ -201,7 +201,7 @@
       </mat-chip-grid>
       <input placeholder="Add label..."
              [matChipInputFor]="chipGrid"
-             (matChipInputTokenEnd)="addLabel($event)"/>
+              (matChipInputTokenEnd)="addLabel($any($event))"/>
     </mat-form-field>
 
     <!-- Other details -->

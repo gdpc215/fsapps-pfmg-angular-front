@@ -1,0 +1,23 @@
+<h2 mat-dialog-title>Exchange Rate Required</h2>
+
+<mat-dialog-content>
+  <p class="mb-4 text-gray-600">
+    USD transactions were detected in the import for
+    <strong>{{ data.sourceName }}</strong>.
+    Enter the USD &rarr; PEN exchange rate for this upload.
+  </p>
+
+  <form [formGroup]="form" class="flex flex-col gap-4 mt-2">
+    <mat-form-field appearance="outline">
+      <mat-label>Exchange Rate (USD &rarr; PEN)</mat-label>
+      <input matInput type="number" formControlName="rate" placeholder="e.g. 3.75" step="0.001" min="0.0001">
+      <mat-error *ngIf="form.get('rate')?.hasError('required')">Exchange rate is required</mat-error>
+      <mat-error *ngIf="form.get('rate')?.hasError('min')">Rate must be greater than 0</mat-error>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSave()" [disabled]="form.invalid">Apply</button>
+</mat-dialog-actions>

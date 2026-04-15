@@ -7,12 +7,20 @@
       <a routerLink="/app/about" class="hover:underline">About</a>
       <a [matMenuTriggerFor]="transactionsMenu" class="hover:underline cursor-pointer">Transactions</a>
       <mat-menu #transactionsMenu="matMenu">
-        <button mat-menu-item routerLink="/transactions/dashboard">Dashboard</button>
-        <button mat-menu-item routerLink="/transactions/movements">Movements</button>
-        <button mat-menu-item routerLink="/transactions/movements/import">Import Movements</button>
-        <button mat-menu-item routerLink="/transactions/manual-recurrents">Manual Recurrents</button>
-        <button mat-menu-item routerLink="/transactions/settings">Settings</button>
+        <button mat-menu-item routerLink="/transactions/dashboard">
+          <mat-icon>dashboard</mat-icon> Dashboard
+        </button>
+        <button mat-menu-item routerLink="/transactions/movements">
+          <mat-icon>receipt_long</mat-icon> Movements
+        </button>
+        <button mat-menu-item routerLink="/transactions/manual-recurrents">
+          <mat-icon>event_available</mat-icon> Due Payments
+        </button>
       </mat-menu>
+      <a routerLink="/transactions/settings" matTooltip="Settings"
+         class="flex items-center hover:text-gray-600 cursor-pointer">
+        <mat-icon>settings</mat-icon>
+      </a>
     </div>
   </div>
 </div>

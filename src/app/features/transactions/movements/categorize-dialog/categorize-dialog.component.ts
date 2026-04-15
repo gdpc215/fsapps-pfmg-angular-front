@@ -2,7 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Category } from '../../../../logic/types/category';
-import { Movement } from '../../../../logic/types/movement';
+import { Transaction } from '../../../../logic/types/transaction';
 
 @Component({
   selector: 'app-categorize-dialog',
@@ -17,7 +17,7 @@ export class CategorizeDialogComponent implements OnInit {
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<CategorizeDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { 
-      movement: Movement, 
+      movement: Transaction, 
       categories: Category[],
       allCategories: Category[]
     }

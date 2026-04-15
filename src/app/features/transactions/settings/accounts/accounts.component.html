@@ -84,6 +84,12 @@
         <button mat-stroked-button color="primary" (click)="recalculateBalance(account)" matTooltip="Recalculate balance from movements">
           <mat-icon>refresh</mat-icon>
         </button>
+        <button *ngIf="account.type === AccountType.CREDIT" mat-stroked-button color="accent" (click)="openCycleSummary(account)" matTooltip="View current billing cycle summary">
+          <mat-icon>summarize</mat-icon>
+        </button>
+        <button *ngIf="account.type === AccountType.CREDIT" mat-stroked-button color="warn" (click)="estimateCycleInterest(account)" matTooltip="Estimate cycle interest from snapshots">
+          <mat-icon>calculate</mat-icon>
+        </button>
       </div>
     </div>
   </div>

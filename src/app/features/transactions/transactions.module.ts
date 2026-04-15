@@ -30,7 +30,6 @@ const routes: Routes = [
     MovementsComponent,
     ManualRecurrentsComponent,
     ImportDialogComponent,
-    ImportPageComponent,
     ReconciliationDialogComponent,
     CategorizeDialogComponent,
     DescriptionDialogComponent,
@@ -38,7 +37,8 @@ const routes: Routes = [
   ],
   imports: [
     SharedModule,
-    RouterModule.forChild(routes)
+    RouterModule.forChild(routes),
+    ImportPageComponent
   ]
 })
 export class TransactionsModule { }

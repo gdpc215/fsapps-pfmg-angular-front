@@ -14,6 +14,7 @@ import { AccountDialogComponent } from './account-dialog/account-dialog.componen
 import { CheckpointDialogComponent } from './checkpoint-dialog/checkpoint-dialog.component';
 import { CycleClosingDateDialogComponent } from './cycle-closing-date-dialog/cycle-closing-date-dialog.component';
 import { CycleSummaryDialogComponent } from './cycle-summary-dialog/cycle-summary-dialog.component';
+import { SnapshotsDialogComponent } from './snapshots-dialog/snapshots-dialog.component';
 
 @Component({
   selector: 'app-accounts',
@@ -138,6 +139,13 @@ export class AccountsComponent implements OnInit {
       } catch (error: any) {
         this.snackBar.open(error?.message || 'Unable to estimate interest.', 'Close', { duration: 6000, panelClass: ['snack-error'] });
       }
+    });
+  }
+
+  openSnapshotsDialog(account: Account): void {
+    this.dialog.open(SnapshotsDialogComponent, {
+      width: '900px',
+      data: { account }
     });
   }
 }

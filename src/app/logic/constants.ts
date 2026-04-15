@@ -14,6 +14,7 @@ export class Constants {
     public static readonly FINANCIAL_SOURCES = "FINANCIAL_SOURCES";
     public static readonly TRANSACTIONS = "TRANSACTIONS";
     public static readonly BALANCE_SNAPSHOTS = "BALANCE_SNAPSHOTS";
+    public static readonly CARD_BALANCE_SNAPSHOTS = "CARD_BALANCE_SNAPSHOTS";
     public static readonly RECURRING_RULES = "RECURRING_RULES";
     public static readonly SAVINGS_GOALS = "SAVINGS_GOALS";
     public static readonly APP_STATE = "APP_STATE";

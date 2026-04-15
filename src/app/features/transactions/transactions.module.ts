@@ -4,6 +4,7 @@ import { CatalogRoutes as routectlg } from '../../application/app.routes.catalog
 import { SharedModule } from '../../shared/shared.module';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { ImportPageComponent } from './import-movements/import-page.component';
+import { ReconciliationDialogComponent } from './import-movements/reconciliation-dialog/reconciliation-dialog.component';
 import { ManualRecurrentsComponent } from './manual-recurrents/manual-recurrents.component';
 import { CategorizeDialogComponent } from './movements/categorize-dialog/categorize-dialog.component';
 import { DescriptionDialogComponent } from './movements/description-dialog/description-dialog.component';
@@ -29,6 +30,8 @@ const routes: Routes = [
     MovementsComponent,
     ManualRecurrentsComponent,
     ImportDialogComponent,
+    ImportPageComponent,
+    ReconciliationDialogComponent,
     CategorizeDialogComponent,
     DescriptionDialogComponent,
     MovementFormDialogComponent

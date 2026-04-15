@@ -33,9 +33,34 @@
       </div> -->
     </div>
 
-    <div *ngIf="validationErrors.length" class="mt-4 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700">
-      <div class="font-semibold mb-1">Import validation failed</div>
-      <div *ngFor="let error of validationErrors">{{ error }}</div>
+    <div *ngIf="selectedAccountIsCredit" class="mt-4 border-t pt-4">
+      <h3 class="text-lg font-semibold mb-3">Card Balance Reconciliation</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <mat-form-field appearance="outline">
+          <mat-label>Previous Owed Snapshot</mat-label>
+          <mat-select [(value)]="selectedPreviousSnapshotId">
+            <mat-option *ngFor="let snapshot of accountSnapshots" [value]="snapshot.id">
+              {{ snapshot.snapshotDate | date:'dd/MM/yyyy' }} - {{ snapshot.owedAmount | number:'1.2-2' }}
+            </mat-option>
+          </mat-select>
+          <mat-hint>Select a baseline owed snapshot</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Current Owed Amount</mat-label>
+          <input matInput type="number" [(ngModel)]="currentOwedAmount" step="0.01" placeholder="0.00" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Current Owed Date</mat-label>
+          <input matInput type="date" [(ngModel)]="currentSnapshotDate" />
+        </mat-form-field>
+      </div>
+
+      <p class="text-sm text-gray-600" *ngIf="accountSnapshots.length === 0">
+        No previous snapshots found for this card. Add one from Settings > Accounts > Balance Snapshots.
+      </p>
     </div>
   </div>
 

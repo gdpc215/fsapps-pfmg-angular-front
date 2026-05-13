@@ -14,26 +14,46 @@ export class ClearStorageComponent {
     private snackBar: MatSnackBar
   ) {}
 
-  storageTags = [
-    { key: Constants.StorageTags.TRANSACTIONS, label: 'Transactions' },
-    { key: Constants.StorageTags.CATEGORIES, label: 'Categories' },
-    { key: Constants.StorageTags.CATEGORY_RULES, label: 'Category Rules' },
-    { key: Constants.StorageTags.FINANCIAL_SOURCES, label: 'Financial Sources' },
-    { key: Constants.StorageTags.BALANCE_SNAPSHOTS, label: 'Snapshots' },
-    { key: Constants.StorageTags.CURRENCIES, label: 'Currencies' },
-    { key: Constants.StorageTags.RECURRING_RULES, label: 'Recurring Rules' },
-    { key: Constants.StorageTags.SAVINGS_GOALS, label: 'Savings Goals' },
-    { key: Constants.StorageTags.DUPLICATE_DETECTION_RULES, label: 'Duplicate Detection Rules' },
-    { key: Constants.StorageTags.USER_OBJECT, label: 'User Object' }
+  storageTags = this.buildStorageTags();
+
+  private readonly legacyStorageTags = [
+    'FINANCIAL_SOURCES',
+    'BALANCE_SNAPSHOTS'
   ];
 
   clearStorage(tag: string) {
-    localStorage.removeItem(tag);
+    this.storageService.set(tag, null);
     this.snackBar.open('Cleared.', undefined, { duration: 2000 });
   }
 
   clearAll() {
-    this.storageTags.forEach(item => localStorage.removeItem(item.key));
+    this.storageTags.forEach(item => this.storageService.set(item.key, null));
+    this.legacyStorageTags.forEach(tag => this.storageService.set(tag, null));
     this.snackBar.open('All storage cleared.', 'OK', { duration: 3000 });
+  }
+
+  private buildStorageTags(): Array<{ key: string; label: string }> {
+    const labels: Record<string, string> = {
+      USER_OBJECT: 'User Object',
+      CURRENCIES: 'Currencies',
+      ACCOUNTS: 'Accounts',
+      TRANSACTIONS: 'Transactions',
+      CARD_BALANCE_SNAPSHOTS: 'Card Balance Snapshots',
+      RECURRING_RULES: 'Recurring Rules',
+      SAVINGS_GOALS: 'Savings Goals',
+      APP_STATE: 'App State',
+      CATEGORIES: 'Categories',
+      CATEGORY_RULES: 'Category Rules',
+      RECURRENT_TRANSACTIONS: 'Recurrent Transactions',
+      DUPLICATE_DETECTION_RULES: 'Duplicate Detection Rules'
+    };
+
+    return Object.entries(Constants.StorageTags)
+      .filter(([, value]) => typeof value === 'string')
+      .map(([name, key]) => ({
+        key,
+        label: labels[name] || name.replace(/_/g, ' ').toLowerCase().replace(/(^|\s)\S/g, (letter) => letter.toUpperCase())
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }
 }

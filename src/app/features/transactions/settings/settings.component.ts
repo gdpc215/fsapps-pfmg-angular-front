@@ -69,17 +69,6 @@ export class SettingsComponent {
       ]
     },
     {
-      label: 'Reconciliation',
-      items: [
-        {
-          title: 'Snapshots',
-          description: 'Register point-in-time balances for reconciliation and interest estimation',
-          icon: 'history',
-          route: `/${CatalogRoutes.TRANSACTIONS}/${CatalogRoutes.SETTINGS}/${CatalogRoutes.SETTINGS_SNAPSHOTS}`
-        }
-      ]
-    },
-    {
       label: 'Data',
       items: [
         {

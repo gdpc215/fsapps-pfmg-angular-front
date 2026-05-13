@@ -4,13 +4,14 @@ import { Constants } from '../constants';
 import { CardBalanceSnapshot } from '../types/card-balance-snapshot';
 import { Utilities } from '../utilities';
 import { BaseService } from './base.service';
+import { TransactionService } from './transaction.service';
 
 @Injectable({ providedIn: 'root' })
 export class CardBalanceSnapshotService extends BaseService {
 
   private snapshots$ = new BehaviorSubject<CardBalanceSnapshot[]>([]);
 
-  constructor() {
+  constructor(private transactionService: TransactionService) {
     super('CardBalanceSnapshotService');
     this.loadFromCache();
   }
@@ -29,7 +30,7 @@ export class CardBalanceSnapshotService extends BaseService {
     return this.snapshots$.value.find(s => s.id === id);
   }
 
-  getLatestSnapshotBeforeOrOn(accountId: string, date: Date): CardBalanceSnapshot | null {
+  getLatestSnapshotBeforeOrOn(accountId: string, date: string): CardBalanceSnapshot | null {
     const targetTime = new Date(date).getTime();
     const matches = this.snapshots$.value
       .filter(s => s.accountId === accountId && new Date(s.snapshotDate).getTime() <= targetTime)
@@ -38,13 +39,39 @@ export class CardBalanceSnapshotService extends BaseService {
     return matches.length > 0 ? matches[0] : null;
   }
 
-  addSnapshot(snapshot: CardBalanceSnapshot): void {
-    const now = new Date();
-    snapshot.id = Utilities.generateUUID();
-    snapshot.createdAt = now;
-    snapshot.updatedAt = now;
+  /**
+   * Calculate the current owed amount based on the latest snapshot and movements since that snapshot.
+   * Returns: latestSnapshot.owedAmount + sum of movements after the snapshot
+   */
+  getCurrentOwedAmount(accountId: string): number {
+    const snapshots = this.getSnapshotsByAccountId(accountId);
+    if (snapshots.length === 0) {
+      return 0;
+    }
 
-    const snapshots = [...this.snapshots$.value, snapshot];
+    const latestSnapshot = snapshots[0]; // Already sorted by date descending
+    const snapshotDate = new Date(latestSnapshot.snapshotDate);
+    snapshotDate.setDate(snapshotDate.getDate() + 1); // Start from next day
+
+    const movements = this.transactionService.getBySource(accountId);
+    const movementsSinceSnapshot = movements
+      .filter(m => new Date(m.date).getTime() >= snapshotDate.getTime())
+      .reduce((sum, m) => sum + (m.amountPen ?? m.amount), 0);
+
+    return latestSnapshot.owedAmount + (latestSnapshot.delta ?? 0) + movementsSinceSnapshot;
+  }
+
+  addSnapshot(snapshot: Omit<CardBalanceSnapshot, 'id' | 'createdAt' | 'updatedAt' | 'delta'> & { delta?: number }): void {
+    const now = new Date();
+    const newSnapshot: CardBalanceSnapshot = {
+      ...snapshot,
+      delta: snapshot.delta ?? 0,
+      id: Utilities.generateUUID(),
+      createdAt: now,
+      updatedAt: now
+    };
+
+    const snapshots = [...this.snapshots$.value, newSnapshot];
     this.saveToCache(snapshots);
   }
 
@@ -53,6 +80,7 @@ export class CardBalanceSnapshotService extends BaseService {
       s.id === snapshot.id
         ? {
             ...snapshot,
+            delta: snapshot.delta ?? 0,
             createdAt: s.createdAt,
             updatedAt: new Date()
           }
@@ -72,6 +100,7 @@ export class CardBalanceSnapshotService extends BaseService {
 
     const parsed = cached.map(snapshot => ({
       ...snapshot,
+      delta: snapshot.delta ?? 0,
       snapshotDate: new Date(snapshot.snapshotDate),
       createdAt: new Date(snapshot.createdAt),
       updatedAt: new Date(snapshot.updatedAt)

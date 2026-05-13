@@ -211,6 +211,20 @@ export class MovementFormDialogComponent implements OnInit {
         amount = -amount; // Store expenses as negative
       }
       movement.amount = amount;
+
+      const currencyCode = (movement.currency || 'PEN').toString().toUpperCase();
+      movement.currency = currencyCode;
+      if (currencyCode === 'PEN') {
+        movement.amountPen = movement.amount;
+        movement.exchangeRate = undefined;
+      } else {
+        const currencyDef = this.data.currencies.find(c => c.code.toUpperCase() === currencyCode);
+        const conversionRate = currencyDef?.conversionRate;
+        movement.exchangeRate = Number.isFinite(conversionRate) && (conversionRate as number) > 0
+          ? conversionRate
+          : undefined;
+        movement.amountPen = movement.amount * (movement.exchangeRate ?? 1);
+      }
       
       movement.operationNumber = this.form.value.operationNumber;
       movement.targetAccountOrCardId = this.form.value.targetAccountOrCardId;

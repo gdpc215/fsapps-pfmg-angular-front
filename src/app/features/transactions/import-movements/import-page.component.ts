@@ -4,26 +4,26 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CatalogRoutes } from '../../../application/app.routes.catalog';
 import { AccountService } from '../../../logic/services/account.service';
-import { CardBalanceSnapshotService } from '../../../logic/services/card-balance-snapshot.service';
 import { CategoryService } from '../../../logic/services/category.service';
 import { CurrencyService } from '../../../logic/services/currency.service';
 import { ImportPreviewResult, ImportProcessingService } from '../../../logic/services/import-processing.service';
 import { MovementService } from '../../../logic/services/movement.service';
-import { Account, AccountType } from '../../../logic/types/account';
-import { CardBalanceSnapshot } from '../../../logic/types/card-balance-snapshot';
+import { Account } from '../../../logic/types/account';
 import { Category } from '../../../logic/types/category';
 import { Currency } from '../../../logic/types/currency';
+import { ImportDateGroup } from '../../../logic/types/import-date-group';
 import { DuplicityStatus, ImportingTransaction } from '../../../logic/types/importing-transaction';
-import { Transaction, TransactionType } from '../../../logic/types/transaction';
+import { Transaction } from '../../../logic/types/transaction';
 import { SharedModule } from '../../../shared/shared.module';
 import { DescriptionDialogComponent } from '../movements/description-dialog/description-dialog.component';
 import { ExchangeRateDialogComponent } from './exchange-rate-dialog/exchange-rate-dialog.component';
-import { ReconciliationDialogComponent, ReconciliationDialogData } from './reconciliation-dialog/reconciliation-dialog.component';
+import { ImportOnlyComponent } from './import-only/import-only.component';
+
 
 @Component({
   selector: 'app-import-page',
   templateUrl: './import-page.component.html',
-  imports: [SharedModule]
+  imports: [SharedModule, ImportOnlyComponent]
 })
 export class ImportPageComponent implements OnInit {
   accounts: Account[] = [];
@@ -33,23 +33,18 @@ export class ImportPageComponent implements OnInit {
   selectedAccount: Account | null = null;
   selectedFile: File | null = null;
   parsedMovements: ImportingTransaction[] = [];
-  previewColumns = ['exclude', 'date', 'description', 'payee', 'subcategory', 'amount', 'actions'];
+  existingTransactions: Transaction[] = [];
+  importDateGroups: ImportDateGroup[] = [];
+  markedForDeletion = new Set<string>();
 
   currencyWarnings: string[] = [];
   validationErrors: string[] = [];
   isRecentMovementsExpanded = false;
 
   movements: Transaction[] = [];
-  accountSnapshots: CardBalanceSnapshot[] = [];
-
-  selectedPreviousSnapshotId: string | null = null;
-  currentOwedAmount: number | null = null;
-  currentSnapshotDate: string = this.toDateInputValue(new Date());
-  reconciliationTolerance = 0.01;
 
   constructor(
     private accountService: AccountService,
-    private cardBalanceSnapshotService: CardBalanceSnapshotService,
     private currencyService: CurrencyService,
     private categoryService: CategoryService,
     public movementService: MovementService,
@@ -65,7 +60,6 @@ export class ImportPageComponent implements OnInit {
       if (this.accounts.length > 0 && !this.selectedAccount) {
         this.selectedAccount = this.accounts[0];
         this.loadMovementsForAccount();
-        this.loadSnapshotsForAccount();
       }
     });
 
@@ -78,16 +72,9 @@ export class ImportPageComponent implements OnInit {
     });
   }
 
-  get selectedAccountIsCredit(): boolean {
-    return this.selectedAccount?.type === AccountType.CREDIT;
-  }
-
-  get selectedPreviousSnapshot(): CardBalanceSnapshot | null {
-    if (!this.selectedPreviousSnapshotId) {
-      return null;
-    }
-
-    return this.accountSnapshots.find(s => s.id === this.selectedPreviousSnapshotId) || null;
+  get earliestFileDate(): string | null {
+    const dates = this.parsedMovements.map((m) => String(m.date)).sort();
+    return dates[0] ?? null;
   }
 
   loadMovementsForAccount(): void {
@@ -120,25 +107,11 @@ export class ImportPageComponent implements OnInit {
   onAccountSelect(): void {
     this.selectedFile = null;
     this.parsedMovements = [];
+    this.existingTransactions = [];
+    this.importDateGroups = [];
     this.currencyWarnings = [];
     this.validationErrors = [];
     this.loadMovementsForAccount();
-    this.loadSnapshotsForAccount();
-  }
-
-  loadSnapshotsForAccount(): void {
-    if (!this.selectedAccount || this.selectedAccount.type !== AccountType.CREDIT) {
-      this.accountSnapshots = [];
-      this.selectedPreviousSnapshotId = null;
-      this.currentOwedAmount = null;
-      this.currentSnapshotDate = this.toDateInputValue(new Date());
-      return;
-    }
-
-    this.accountSnapshots = this.cardBalanceSnapshotService.getSnapshotsByAccountId(this.selectedAccount.id);
-    this.selectedPreviousSnapshotId = this.accountSnapshots.length > 0 ? this.accountSnapshots[0].id : null;
-    this.currentOwedAmount = null;
-    this.currentSnapshotDate = this.toDateInputValue(new Date());
   }
 
   async onFileSelect(event: any): Promise<void> {
@@ -181,9 +154,14 @@ export class ImportPageComponent implements OnInit {
   private applyPreview(preview: ImportPreviewResult): void {
     this.validationErrors = preview.validationErrors;
     this.parsedMovements = preview.rows as ImportingTransaction[];
+    this.existingTransactions = preview.existingTransactions || [];
+    this.markedForDeletion = new Set<string>();
+    this.rebuildImportDateGroups();
 
     if (this.validationErrors.length > 0) {
       this.parsedMovements = [];
+      this.existingTransactions = [];
+      this.importDateGroups = [];
       return;
     }
 
@@ -194,8 +172,24 @@ export class ImportPageComponent implements OnInit {
     });
   }
 
-  toggleExclude(item: ImportingTransaction): void {
-    item.excluded = !item.excluded;
+  toggleExclude(item: ImportingTransaction, excluded?: boolean): void {
+    item.excluded = typeof excluded === 'boolean' ? excluded : !item.excluded;
+    this.cdr.detectChanges();
+  }
+
+  toggleDeleteMark(tx: Transaction): void {
+    const updated = new Set(this.markedForDeletion);
+    if (updated.has(tx.id)) {
+      updated.delete(tx.id);
+    } else {
+      updated.add(tx.id);
+    }
+    this.markedForDeletion = updated;
+    this.cdr.detectChanges();
+  }
+
+  get markedForDeletionCount(): number {
+    return this.markedForDeletion.size;
   }
 
   onSubcategoryChange(item: ImportingTransaction, subcategoryId: string | null): void {
@@ -213,9 +207,13 @@ export class ImportPageComponent implements OnInit {
 
   get movementsToImport(): number { return this.parsedMovements.filter(m => !m.excluded).length; }
 
-  get duplicateCount(): number { return this.parsedMovements.filter(m => m.duplicityStatus === DuplicityStatus.CONFIRMED).length; }
+  get duplicateCount(): number {
+    return this.parsedMovements.filter(m => !m.excluded && m.duplicityStatus === DuplicityStatus.CONFIRMED).length;
+  }
 
-  get potentialDuplicateCount(): number { return this.parsedMovements.filter(m => m.duplicityStatus === DuplicityStatus.POTENTIAL).length; }
+  get potentialDuplicateCount(): number {
+    return this.parsedMovements.filter(m => !m.excluded && m.duplicityStatus === DuplicityStatus.POTENTIAL).length;
+  }
 
   onImport(): void {
     if (!this.selectedAccount) { alert('Please select an account before importing'); return; }
@@ -231,6 +229,8 @@ export class ImportPageComponent implements OnInit {
       movement.subcategoryId = importingMovement.proposedSubcategoryId;
       movement.amount = importingMovement.amount;
       movement.currency = importingMovement.currency;
+      movement.amountPen = importingMovement.amountPen;
+      movement.exchangeRate = importingMovement.exchangeRate;
       movement.accountOrCardId = importingMovement.accountOrCardId;
       movement.operationNumber = importingMovement.operationNumber ?? null;
       return movement;
@@ -240,159 +240,27 @@ export class ImportPageComponent implements OnInit {
       return;
     }
 
-    if (!this.selectedAccountIsCredit) {
-      this.finishImport(movementsToImport);
-      return;
-    }
-
-    if (!this.selectedPreviousSnapshot) {
-      alert('Select a previous owed snapshot for this card before importing.');
-      return;
-    }
-
-    if (this.currentOwedAmount === null || Number.isNaN(this.currentOwedAmount)) {
-      alert('Enter the current owed amount before importing.');
-      return;
-    }
-
-    const currentSnapshotDate = new Date(this.currentSnapshotDate);
-    if (Number.isNaN(currentSnapshotDate.getTime())) {
-      alert('Enter a valid current owed date.');
-      return;
-    }
-
-    const previousSnapshot = this.selectedPreviousSnapshot;
-    const importedMovementsTotal = movementsToImport
-      .filter(m => {
-        const movementDate = new Date(m.date).getTime();
-        const previousDate = new Date(previousSnapshot.snapshotDate).getTime();
-        const currentDate = currentSnapshotDate.getTime();
-        return movementDate > previousDate && movementDate <= currentDate;
-      })
-      .reduce((sum, m) => sum + m.amount, 0);
-
-    const expectedCurrentOwed = this.roundTo2(previousSnapshot.owedAmount + importedMovementsTotal);
-    const delta = this.roundTo2(this.currentOwedAmount - expectedCurrentOwed);
-
-    const persistSnapshot = (): void => {
-      const newSnapshot = new CardBalanceSnapshot();
-      newSnapshot.accountId = this.selectedAccount!.id;
-      newSnapshot.snapshotDate = currentSnapshotDate;
-      newSnapshot.owedAmount = this.currentOwedAmount!;
-      newSnapshot.notes = 'Imported batch checkpoint';
-      this.cardBalanceSnapshotService.addSnapshot(newSnapshot);
-    };
-
-    if (Math.abs(delta) < this.reconciliationTolerance) {
-      this.finishImport(movementsToImport);
-      persistSnapshot();
-      return;
-    }
-
-    const dialogData: ReconciliationDialogData = {
-      accountName: this.selectedAccount.name,
-      previousOwedAmount: previousSnapshot.owedAmount,
-      previousSnapshotDate: previousSnapshot.snapshotDate,
-      importedMovementsTotal,
-      expectedCurrentOwed,
-      currentOwedAmount: this.currentOwedAmount,
-      delta
-    };
-
-    this.dialog.open(ReconciliationDialogComponent, {
-      width: '560px',
-      data: dialogData
-    }).afterClosed().subscribe(confirmed => {
-      const finalMovements = [...movementsToImport];
-
-      if (confirmed) {
-        finalMovements.push(this.buildInterestAdjustmentMovement(delta, currentSnapshotDate));
-      }
-
-      this.finishImport(finalMovements);
-      persistSnapshot();
-    });
-  }
-
-  private buildInterestAdjustmentMovement(delta: number, date: Date): Transaction {
-    const movement = new Transaction();
-    movement.accountOrCardId = this.selectedAccount!.id;
-    movement.date = date;
-    movement.payee = this.selectedAccount!.name;
-    movement.bankDescription = 'Interest reconciliation adjustment';
-    movement.additionalInfo = 'Auto-generated from snapshot reconciliation';
-    movement.notes = `Delta adjustment based on owed snapshots. Delta: ${delta.toFixed(2)}`;
-    movement.amount = delta;
-    movement.currency = this.getSelectedAccountCurrencyCode();
-    movement.type = delta < 0 ? TransactionType.EXPENSE : TransactionType.INCOME;
-    movement.isStub = true;
-    (movement as any).adjustmentType = 'INTEREST_RECONCILIATION';
-    (movement as any).adjustmentContext = `snapshot:${this.selectedPreviousSnapshotId}->${this.currentSnapshotDate}`;
-
-    const categoryPair = this.getAdjustmentCategoryIds();
-    movement.categoryId = categoryPair.categoryId;
-    movement.subcategoryId = categoryPair.subcategoryId;
-
-    return movement;
-  }
-
-  private getAdjustmentCategoryIds(): { categoryId: string | null, subcategoryId: string | null } {
-    const chargesAndFees = this.categories.find(c => c.name.toLowerCase() === 'charges & fees');
-    if (chargesAndFees?.parentId) {
-      return {
-        categoryId: chargesAndFees.parentId,
-        subcategoryId: chargesAndFees.id
-      };
-    }
-
-    const financialMovements = this.categories.find(c => c.name.toLowerCase() === 'financial movements' && c.parentId === null);
-    if (financialMovements) {
-      return {
-        categoryId: financialMovements.id,
-        subcategoryId: null
-      };
-    }
-
-    return {
-      categoryId: null,
-      subcategoryId: null
-    };
-  }
-
-  private getSelectedAccountCurrencyCode(): string {
-    if (!this.selectedAccount) {
-      return '';
-    }
-
-    const currency = this.currencies.find(c => c.id === this.selectedAccount!.currencyId);
-    return currency?.code || '';
+    this.finishImport(movementsToImport);
   }
 
   private finishImport(movements: Transaction[]): void {
+    this.markedForDeletion.forEach(id => this.movementService.deleteMovement(id));
     this.movementService.addMovements(movements);
     this.selectedFile = null;
     this.parsedMovements = [];
+    this.existingTransactions = [];
+    this.importDateGroups = [];
+    this.markedForDeletion = new Set<string>();
     this.currencyWarnings = [];
-    this.currentOwedAmount = null;
-    this.currentSnapshotDate = this.toDateInputValue(new Date());
-    this.loadSnapshotsForAccount();
     alert(`${movements.length} movements imported`);
-  }
-
-  private roundTo2(value: number): number {
-    return Math.round((value + Number.EPSILON) * 100) / 100;
-  }
-
-  private toDateInputValue(date: Date): string {
-    const year = date.getFullYear();
-    const month = `${date.getMonth() + 1}`.padStart(2, '0');
-    const day = `${date.getDate()}`.padStart(2, '0');
-    return `${year}-${month}-${day}`;
   }
 
   onCancel(): void {
     this.selectedFile = null;
     this.parsedMovements = [];
+    this.existingTransactions = [];
+    this.importDateGroups = [];
+    this.markedForDeletion = new Set<string>();
     this.validationErrors = [];
     this.currencyWarnings = [];
     this.router.navigate([`/${CatalogRoutes.TRANSACTIONS}/${CatalogRoutes.TRANSACTIONS_MOVEMENTS}`]);
@@ -461,5 +329,87 @@ export class ImportPageComponent implements OnInit {
 
   toggleRecentMovements(): void {
     this.isRecentMovementsExpanded = !this.isRecentMovementsExpanded;
+  }
+
+  trackByImportDateGroup(_index: number, group: ImportDateGroup): string {
+    return group.dateKey;
+  }
+
+  trackByImportingTransaction(_index: number, row: ImportingTransaction): string {
+    return row.id;
+  }
+
+  trackByTransaction(_index: number, tx: Transaction): string {
+    return tx.id;
+  }
+
+  private toDateInputValue(date: Date): string {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private parseLocalDate(dateString: string): Date {
+    return new Date(`${dateString}T00:00:00`);
+  }
+
+  private toDateKey(value: string | Date): string | null {
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime()) ? null : this.toDateInputValue(value);
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
+    }
+
+    return this.toDateInputValue(parsed);
+  }
+
+  private rebuildImportDateGroups(): void {
+    const groups = new Map<string, ImportDateGroup>();
+
+    const ensureGroup = (value: string | Date): ImportDateGroup | null => {
+      const dateKey = this.toDateKey(value);
+      if (!dateKey) {
+        return null;
+      }
+
+      const current = groups.get(dateKey);
+      if (current) {
+        return current;
+      }
+
+      const created: ImportDateGroup = {
+        dateKey,
+        date: this.parseLocalDate(dateKey),
+        incoming: [],
+        existing: []
+      };
+      groups.set(dateKey, created);
+      return created;
+    };
+
+    this.parsedMovements.forEach((row) => {
+      const group = ensureGroup(row.date);
+      if (group) {
+        group.incoming.push(row);
+      }
+    });
+
+    this.existingTransactions.forEach((tx) => {
+      const group = ensureGroup(tx.date);
+      if (group) {
+        group.existing.push(tx);
+      }
+    });
+
+    this.importDateGroups = Array.from(groups.values())
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
   }
 }

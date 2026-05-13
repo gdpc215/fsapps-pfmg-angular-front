@@ -11,9 +11,8 @@ export class Constants {
   public static StorageTags = class {
     public static readonly USER_OBJECT = "USER_OBJECT";
     public static readonly CURRENCIES = "CURRENCIES";
-    public static readonly FINANCIAL_SOURCES = "FINANCIAL_SOURCES";
+    public static readonly ACCOUNTS = "ACCOUNTS";
     public static readonly TRANSACTIONS = "TRANSACTIONS";
-    public static readonly BALANCE_SNAPSHOTS = "BALANCE_SNAPSHOTS";
     public static readonly CARD_BALANCE_SNAPSHOTS = "CARD_BALANCE_SNAPSHOTS";
     public static readonly RECURRING_RULES = "RECURRING_RULES";
     public static readonly SAVINGS_GOALS = "SAVINGS_GOALS";

@@ -84,21 +84,7 @@
   </div>
 
   <div *ngIf="filteredMovements.length > 0" class="bg-white rounded-lg shadow overflow-hidden">
-    <table mat-table [dataSource]="filteredMovements" multiTemplateDataRows class="w-full">
-
-      <!-- Expand toggle -->
-      <ng-container matColumnDef="expand">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let movement">
-          <button mat-icon-button (click)="toggleRow(movement); $event.stopPropagation()"
-                  [attr.aria-label]="expandedElement?.id === movement.id ? 'Collapse' : 'Expand'">
-            <mat-icon class="transition-transform duration-200"
-                      [class.rotate-180]="expandedElement?.id === movement.id">
-              expand_more
-            </mat-icon>
-          </button>
-        </td>
-      </ng-container>
+    <table mat-table [dataSource]="filteredMovements" class="w-full movements-table">
 
       <ng-container matColumnDef="date">
         <th mat-header-cell *matHeaderCellDef class="font-bold">Date</th>
@@ -125,7 +111,7 @@
             </span>
             <span *ngIf="movement.isManualOverride" class="text-xs text-blue-700 font-semibold">Manual override</span>
             <mat-chip *ngIf="movement.type === TransactionType.TRANSFER" class="text-xs mt-1 w-fit" color="primary">Transfer</mat-chip>
-            <mat-chip *ngIf="movement.isStub" class="text-xs mt-1 w-fit" color="warn">Stub</mat-chip>
+            <!-- <mat-chip *ngIf="movement.isStub" class="text-xs mt-1 w-fit" color="warn">Stub</mat-chip> -->
           </div>
         </td>
       </ng-container>
@@ -178,47 +164,9 @@
         </td>
       </ng-container>
 
-      <!-- Inline expansion detail row -->
-      <ng-container matColumnDef="expandedDetail">
-        <td mat-cell *matCellDef="let movement" [attr.colspan]="displayedColumns.length">
-          <div class="overflow-hidden transition-all duration-300"
-               [style.max-height]="expandedElement?.id === movement.id ? '200px' : '0px'"
-               [style.opacity]="expandedElement?.id === movement.id ? '1' : '0'">
-            <div class="p-4 bg-gray-50 border-t border-gray-100 flex flex-col gap-2">
-              <div *ngIf="movement.userDescription && movement.userDescription !== movement.description">
-                <span class="text-xs text-gray-500 uppercase font-semibold">Original description</span>
-                <p class="text-sm text-gray-700">{{ movement.description }}</p>
-              </div>
-              <div *ngIf="movement.notes">
-                <span class="text-xs text-gray-500 uppercase font-semibold">Notes</span>
-                <p class="text-sm text-gray-700">{{ movement.notes }}</p>
-              </div>
-              <div *ngIf="movement.labels && movement.labels.length > 0">
-                <span class="text-xs text-gray-500 uppercase font-semibold">Labels</span>
-                <div class="flex gap-1 mt-1 flex-wrap">
-                  <mat-chip *ngFor="let label of movement.labels" class="text-xs h-6">{{ label }}</mat-chip>
-                </div>
-              </div>
-              <div *ngIf="movement.operationNumber">
-                <span class="text-xs text-gray-500 uppercase font-semibold">Operation #</span>
-                <span class="text-sm text-gray-700 ml-2">{{ movement.operationNumber }}</span>
-              </div>
-              <div *ngIf="movement.amountPen && movement.currency !== 'PEN'">
-                <span class="text-xs text-gray-500 uppercase font-semibold">Amount PEN</span>
-                <span class="text-sm text-gray-700 ml-2">{{ movement.amountPen | number:'1.2-2' }}</span>
-                <span *ngIf="movement.exchangeRate" class="text-xs text-gray-400 ml-2">(rate: {{ movement.exchangeRate }})</span>
-              </div>
-            </div>
-          </div>
-        </td>
-      </ng-container>
-
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-          class="cursor-pointer hover:bg-gray-50"
-          (click)="toggleRow(row)"></tr>
-      <tr mat-row *matRowDef="let row; columns: ['expandedDetail']"
-          class="detail-row h-0"></tr>
+          class="movement-row hover:bg-gray-50"></tr>
     </table>
   </div>
 </div>

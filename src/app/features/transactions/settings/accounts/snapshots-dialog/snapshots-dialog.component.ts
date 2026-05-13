@@ -59,7 +59,10 @@ export class SnapshotsDialogComponent implements OnInit {
       return;
     }
 
-    const parsedDate = new Date(this.form.value.snapshotDate);
+    // Parse as local time (not UTC) by appending T00:00:00 — otherwise
+    // date-only ISO strings are treated as UTC midnight and shift back one day
+    // in negative-offset timezones.
+    const parsedDate = new Date(`${this.form.value.snapshotDate}T00:00:00`);
     if (Number.isNaN(parsedDate.getTime())) {
       return;
     }
@@ -75,6 +78,7 @@ export class SnapshotsDialogComponent implements OnInit {
       updated.accountId = existing.accountId;
       updated.snapshotDate = parsedDate;
       updated.owedAmount = Number(this.form.value.owedAmount);
+      updated.delta = existing.delta ?? 0;
       updated.notes = this.form.value.notes || '';
       updated.createdAt = existing.createdAt;
       updated.updatedAt = new Date();
@@ -85,6 +89,7 @@ export class SnapshotsDialogComponent implements OnInit {
       snapshot.accountId = this.data.account.id;
       snapshot.snapshotDate = parsedDate;
       snapshot.owedAmount = Number(this.form.value.owedAmount);
+      snapshot.delta = 0;
       snapshot.notes = this.form.value.notes || '';
       this.cardBalanceSnapshotService.addSnapshot(snapshot);
     }

@@ -3,12 +3,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
 import { AccountService } from '../../../../logic/services/account.service';
+import { CardBalanceSnapshotService } from '../../../../logic/services/card-balance-snapshot.service';
 import { CreditCardService } from '../../../../logic/services/credit-card.service';
 import { CurrencyService } from '../../../../logic/services/currency.service';
 import { MovementService } from '../../../../logic/services/movement.service';
-import { SnapshotService } from '../../../../logic/services/snapshot.service';
 import { Account, AccountType } from '../../../../logic/types/account';
-import { BalanceSnapshot } from '../../../../logic/types/balance-snapshot';
 import { Currency } from '../../../../logic/types/currency';
 import { AccountDialogComponent } from './account-dialog/account-dialog.component';
 import { CheckpointDialogComponent } from './checkpoint-dialog/checkpoint-dialog.component';
@@ -28,10 +27,10 @@ export class AccountsComponent implements OnInit {
 
   constructor(
     @Inject(AccountService) private accountService: AccountService,
-    private snapshotService: SnapshotService,
     private creditCardService: CreditCardService,
     private movementService: MovementService,
     private currencyService: CurrencyService,
+      private cardBalanceSnapshotService: CardBalanceSnapshotService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
   ) {}
@@ -65,6 +64,11 @@ export class AccountsComponent implements OnInit {
     });
   }
 
+  setDefaults(): void {
+    this.accountService.seedDefaultAccounts();
+    this.snackBar.open('Default accounts added.', 'OK', { duration: 3000 });
+  }
+
   openEditDialog(account: Account): void {
     const dialogRef = this.dialog.open(AccountDialogComponent, {
       width: '500px',
@@ -86,12 +90,19 @@ export class AccountsComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result !== undefined && result !== null) {
-        const snapshot = new BalanceSnapshot();
-        snapshot.sourceId = account.id;
-        snapshot.currency = (account.currencyId as 'PEN' | 'USD') || 'PEN';
-        snapshot.balance = Number(result);
-        snapshot.datetime = new Date().toISOString();
-        this.snapshotService.addSnapshot(snapshot);
+         // For credit cards, create CardBalanceSnapshot; otherwise just update balance
+        if (account.type === AccountType.CREDIT) {
+          this.cardBalanceSnapshotService.addSnapshot({
+             accountId: account.id,
+             snapshotDate: new Date(),
+             owedAmount: Number(result),
+             notes: 'Manual checkpoint'
+           });
+         } else {
+           // For debit accounts, just update the current balance
+           account.currentBalance = Number(result);
+           this.accountService.updateAccount(account);
+         }
       }
     });
   }
@@ -130,10 +141,8 @@ export class AccountsComponent implements OnInit {
       }
 
       try {
-        const interestTx = this.creditCardService.estimateCycleInterest({
-          id: account.id,
-          type: account.sourceType
-        }, dateStr);
+        const interestTx = this.creditCardService.estimateCycleInterest(
+           account.id, dateStr);
         this.movementService.addMovement(interestTx as any);
         this.snackBar.open(`Estimated interest inserted: ${interestTx.amount.toFixed(2)} PEN`, 'OK', { duration: 5000 });
       } catch (error: any) {

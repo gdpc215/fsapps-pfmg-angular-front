@@ -10,8 +10,8 @@
       <div>Previous owed ({{ data.previousSnapshotDate | date:'dd/MM/yyyy' }}):</div>
       <div class="text-right font-medium">{{ data.previousOwedAmount | number:'1.2-2' }}</div>
 
-      <div>Imported movements total:</div>
-      <div class="text-right font-medium">{{ data.importedMovementsTotal | number:'1.2-2' }}</div>
+      <div>Movements total:</div>
+      <div class="text-right font-medium">{{ data.movementsTotal | number:'1.2-2' }}</div>
 
       <div>Expected current owed:</div>
       <div class="text-right font-medium">{{ data.expectedCurrentOwed | number:'1.2-2' }}</div>
@@ -32,6 +32,6 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button (click)="onCancel()">No</button>
+  <button mat-button (click)="onCancel()">No, carry over</button>
   <button mat-raised-button color="primary" (click)="onConfirm()">Yes, add adjustment</button>
 </mat-dialog-actions>

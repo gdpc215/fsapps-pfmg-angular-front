@@ -21,14 +21,14 @@
                [class.text-red-500]="sb.balance < 0">
               {{ sb.balance | number:'1.2-2' }}
             </p>
-            <p class="text-xs text-gray-400 mt-0.5">{{ sb.source.currency ?? 'PEN' }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">{{ sb.source.currencyId || 'PEN' }}</p>
           </div>
           <span class="text-xs px-2 py-0.5 rounded-full ml-2 flex-shrink-0"
-                [class.bg-blue-100]="sb.source.type === FinancialSourceType.ACCOUNT"
-                [class.text-blue-700]="sb.source.type === FinancialSourceType.ACCOUNT"
-                [class.bg-purple-100]="sb.source.type === FinancialSourceType.CREDIT_CARD"
-                [class.text-purple-700]="sb.source.type === FinancialSourceType.CREDIT_CARD">
-            {{ sb.source.type === FinancialSourceType.ACCOUNT ? 'Debit' : 'Credit' }}
+                [class.bg-blue-100]="sb.source.type === AccountType.DEBIT"
+                [class.text-blue-700]="sb.source.type === AccountType.DEBIT"
+                [class.bg-purple-100]="sb.source.type === AccountType.CREDIT"
+                [class.text-purple-700]="sb.source.type === AccountType.CREDIT">
+            {{ sb.source.type === AccountType.DEBIT ? 'Debit' : 'Credit' }}
           </span>
         </div>
       </div>

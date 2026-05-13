@@ -1,107 +1,145 @@
 import { Injectable } from '@angular/core';
-import { combineLatest, map, Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { Constants } from '../constants';
 import { Account, AccountType } from '../types/account';
-import { BalanceSnapshot } from '../types/balance-snapshot';
-import { FinancialSource, FinancialSourceType } from '../types/financial-source';
-import { BalanceService } from './balance.service';
-import { FinancialSourceService } from './financial-source.service';
-import { SnapshotService } from './snapshot.service';
+import { CardBalanceSnapshot } from '../types/card-balance-snapshot';
+import { Utilities } from '../utilities';
+import { BaseService } from './base.service';
+import { CardBalanceSnapshotService } from './card-balance-snapshot.service';
 
 @Injectable({ providedIn: 'root' })
-export class AccountService {
+export class AccountService extends BaseService {
+  private accounts$ = new BehaviorSubject<Account[]>([]);
+
   constructor(
-    private sourceService: FinancialSourceService,
-    private balanceService: BalanceService,
-    private snapshotService: SnapshotService
-  ) {}
+    private cardBalanceSnapshotService: CardBalanceSnapshotService
+  ) {
+    super('AccountService');
+    this.loadFromCache();
+  }
 
   getAccounts(): Observable<Account[]> {
-    return combineLatest([
-      this.sourceService.getSources(),
-      this.balanceService.changes$
-    ]).pipe(
-      map(([sources]) => sources.map((source) => this.toAccount(source)))
-    );
+    return this.accounts$.asObservable();
+  }
+
+  getAccountsSync(): Account[] {
+    return this.accounts$.value;
   }
 
   getAccountById(id: string): Account | undefined {
-    const source = this.sourceService.getById(id);
-    return source ? this.toAccount(source) : undefined;
+    return this.accounts$.value.find(a => a.id === id);
   }
 
   addAccount(account: Account): void {
-    const source = this.toSource(account);
-    this.sourceService.addSource(source);
+    account.id = Utilities.generateUUID();
+    account.currentBalance = account.initialBalance;
 
-    if (account.initialBalance !== 0) {
-      const snapshot = new BalanceSnapshot();
-      snapshot.sourceId = source.id;
-      snapshot.currency = (account.currencyId as 'PEN' | 'USD') || 'PEN';
-      snapshot.balance = account.initialBalance;
-      // Use a very early date so it precedes all future transactions
-      snapshot.datetime = new Date('2000-01-01T00:00:00.000Z').toISOString();
-      this.snapshotService.addSnapshot(snapshot);
+    // For credit cards with initial balance, create an owed snapshot
+    if (account.type === AccountType.CREDIT && account.initialBalance !== 0) {
+      const cardSnapshot = new CardBalanceSnapshot();
+      cardSnapshot.accountId = account.id;
+      cardSnapshot.snapshotDate = new Date();
+      cardSnapshot.owedAmount = account.initialBalance;
+      cardSnapshot.notes = 'Initial card balance snapshot';
+      this.cardBalanceSnapshotService.addSnapshot(cardSnapshot);
     }
+
+    const accounts = [...this.accounts$.value, account];
+    this.saveToCache(accounts);
   }
 
   updateAccount(account: Account): void {
-    const source = this.toSource(account);
-    this.sourceService.updateSource(source);
+    const accounts = this.accounts$.value.map(a =>
+      a.id === account.id ? account : a
+    );
+    this.saveToCache(accounts);
   }
 
   deleteAccount(id: string): void {
-    this.sourceService.deleteSource(id);
+    const accounts = this.accounts$.value.filter(a => a.id !== id);
+    this.saveToCache(accounts);
   }
 
-  // Balances are now derived from snapshots + transactions.
+  setCheckpoint(id: string, balance: number): void {
+    const accounts = this.accounts$.value.map(a => {
+      if (a.id === id) {
+        const updated = Object.assign(new Account(), a);
+        updated.lastCheckpointBalance = balance;
+        updated.lastCheckpointDate = new Date();
+        return updated;
+      }
+      return a;
+    });
+    this.saveToCache(accounts);
+  }
+
+  updateBalance(accountId: string, amountChange: number): void {
+    const accounts = this.accounts$.value.map(a => {
+      if (a.id === accountId) {
+        const updated = Object.assign(new Account(), a);
+        updated.currentBalance += amountChange;
+        return updated;
+      }
+      return a;
+    });
+    this.saveToCache(accounts);
+  }
+
+  recalculateBalance(accountId: string, totalMovementsAmount: number): void {
+    const accounts = this.accounts$.value.map(a => {
+      if (a.id === accountId) {
+        const updated = Object.assign(new Account(), a);
+        updated.currentBalance = a.initialBalance + totalMovementsAmount;
+        return updated;
+      }
+      return a;
+    });
+    this.saveToCache(accounts);
+  }
+
   getComputedBalance(accountId: string): number {
-    return this.balanceService.getCurrentBalance(accountId);
+    return this.accounts$.value.find(a => a.id === accountId)?.currentBalance ?? 0;
   }
 
-  // Legacy no-op to avoid mutating source state.
-  setCheckpoint(_id: string, _balance: number): void {
-    return;
+  seedDefaultAccounts(): void {
+    // Debit account 1 — main checking account
+    const checking = new Account();
+    checking.name = 'Tarjeta Debito';
+    checking.type = AccountType.DEBIT;
+    checking.color = '#42a5f5';
+    checking.currencyId = 'PEN';
+    checking.initialBalance = 316.57;
+
+    // Debit account 2 — savings account
+    const savings = new Account();
+    savings.name = 'Sueldo';
+    savings.type = AccountType.DEBIT;
+    savings.color = '#66bb6a';
+    savings.currencyId = 'PEN';
+    savings.initialBalance = 4493.95;
+
+    // Credit card account
+    const creditCard = new Account();
+    creditCard.name = 'Visa Sapphire';
+    creditCard.type = AccountType.CREDIT;
+    creditCard.color = '#341251';
+    creditCard.currencyId = 'PEN';
+    creditCard.paymentCurrencyId = 'PEN';
+    creditCard.initialBalance = 22470.98;
+    creditCard.creditLimit = 80000;
+    creditCard.billingDate = 10;
+    creditCard.paymentDate = 5;
+
+    [checking, savings, creditCard].forEach(account => this.addAccount(account));
   }
 
-  // Legacy no-op to avoid mutable balance updates.
-  updateBalance(_accountId: string, _amountChange: number): void {
-    return;
+  private loadFromCache(): void {
+    const cached = this.fetchFromLocalStorage<Account[]>(Constants.StorageTags.ACCOUNTS);
+    this.accounts$.next(cached || []);
   }
 
-  // Legacy no-op kept for compatibility.
-  recalculateBalance(_accountId: string, _totalMovementsAmount: number): void {
-    return;
-  }
-
-  private toAccount(source: FinancialSource): Account {
-    const account = new Account();
-    account.id = source.id;
-    account.name = source.name;
-    account.type = source.type === FinancialSourceType.CREDIT_CARD ? AccountType.CREDIT : AccountType.DEBIT;
-    account.currencyId = source.currency || 'PEN';
-    account.color = source.color || '#ba68c8';
-    account.billingDate = source.closingDay;
-    account.paymentDate = source.dueDay;
-    account.creditLimit = source.creditLinePen;
-    account.currentBalance = this.balanceService.getCurrentBalance(source.id);
-    account.initialBalance = 0;
-    account.lastCheckpointBalance = 0;
-    account.lastCheckpointDate = null;
-    return account;
-  }
-
-  private toSource(account: Account): FinancialSource {
-    const source = new FinancialSource();
-    source.id = account.id;
-    source.name = account.name;
-    source.type = account.type === AccountType.CREDIT
-      ? FinancialSourceType.CREDIT_CARD
-      : FinancialSourceType.ACCOUNT;
-    source.currency = account.currencyId as 'PEN' | 'USD';
-    source.color = account.color;
-    source.closingDay = account.billingDate;
-    source.dueDay = account.paymentDate;
-    source.creditLinePen = account.creditLimit;
-    return source;
+  private saveToCache(accounts: Account[]): void {
+    this.storeInLocalStorage(accounts, Constants.StorageTags.ACCOUNTS);
+    this.accounts$.next(accounts);
   }
 }

@@ -1,4 +1,3 @@
-import { FinancialSourceType } from './financial-source';
 
 export enum AccountType {
   DEBIT = 'DEBIT',
@@ -30,12 +29,6 @@ export class Account {
     this.currentBalance = 0;
     this.lastCheckpointBalance = 0;
     this.lastCheckpointDate = null;
-  }
-
-  get sourceType(): FinancialSourceType {
-    return this.type === AccountType.CREDIT
-      ? FinancialSourceType.CREDIT_CARD
-      : FinancialSourceType.ACCOUNT;
   }
 
   get isCredit(): boolean {

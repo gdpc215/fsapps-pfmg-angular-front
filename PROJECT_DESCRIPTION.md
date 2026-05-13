@@ -288,7 +288,7 @@ npm install
 npm start
 ```
 
-The application will be available at `http://localhost:4200`.
+The application will be available at `http://localhost:8888`.
 
 ### Available Scripts
 

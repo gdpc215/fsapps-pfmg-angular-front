@@ -1,9 +1,14 @@
 <div class="p-6">
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-2xl font-bold">Accounts</h2>
-    <button mat-raised-button color="primary" (click)="openAddDialog()">
-      <mat-icon>add</mat-icon> Add Account
-    </button>
+    <div class="flex gap-2">
+      <button mat-stroked-button color="accent" (click)="setDefaults()">
+        <mat-icon>playlist_add</mat-icon> Set defaults
+      </button>
+      <button mat-raised-button color="primary" (click)="openAddDialog()">
+        <mat-icon>add</mat-icon> Add Account
+      </button>
+    </div>
   </div>
 
   <div *ngIf="(accounts$ | async)?.length === 0" class="text-center py-12 text-gray-500">

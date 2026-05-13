@@ -17,9 +17,9 @@ export class StorageService {
 
   exportAll(): string {
     const state = {
-      financialSources: this.get(Constants.StorageTags.FINANCIAL_SOURCES) || [],
+      accounts: this.get(Constants.StorageTags.ACCOUNTS) || [],
       transactions: this.get(Constants.StorageTags.TRANSACTIONS) || [],
-      snapshots: this.get(Constants.StorageTags.BALANCE_SNAPSHOTS) || [],
+      cardBalanceSnapshots: this.get(Constants.StorageTags.CARD_BALANCE_SNAPSHOTS) || [],
       recurringRules: this.get(Constants.StorageTags.RECURRING_RULES) || [],
       savingsGoals: this.get(Constants.StorageTags.SAVINGS_GOALS) || [],
       categories: this.get(Constants.StorageTags.CATEGORIES) || [],
@@ -36,7 +36,7 @@ export class StorageService {
     try {
       const state = JSON.parse(json);
       const requiredKeys = [
-        'financialSources', 'transactions', 'snapshots', 'recurringRules',
+        'accounts', 'transactions', 'cardBalanceSnapshots', 'recurringRules',
         'savingsGoals', 'categories', 'categoryRules', 'duplicateDetectionRules', 'currencies'
       ];
 
@@ -50,9 +50,9 @@ export class StorageService {
         return { success: false, errors };
       }
 
-      this.set(Constants.StorageTags.FINANCIAL_SOURCES, state.financialSources || []);
+      this.set(Constants.StorageTags.ACCOUNTS, state.accounts || []);
       this.set(Constants.StorageTags.TRANSACTIONS, state.transactions || []);
-      this.set(Constants.StorageTags.BALANCE_SNAPSHOTS, state.snapshots || []);
+      this.set(Constants.StorageTags.CARD_BALANCE_SNAPSHOTS, state.cardBalanceSnapshots || []);
       this.set(Constants.StorageTags.RECURRING_RULES, state.recurringRules || []);
       this.set(Constants.StorageTags.SAVINGS_GOALS, state.savingsGoals || []);
       this.set(Constants.StorageTags.CATEGORIES, state.categories || []);

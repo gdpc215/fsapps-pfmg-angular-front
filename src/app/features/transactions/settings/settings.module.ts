@@ -22,7 +22,6 @@ import { ContributionDialogComponent } from './savings-goals/contribution-dialog
 import { GoalDialogComponent } from './savings-goals/goal-dialog/goal-dialog.component';
 import { SavingsGoalsComponent } from './savings-goals/savings-goals.component';
 import { SettingsComponent } from './settings.component';
-import { SnapshotsComponent } from './snapshots/snapshots.component';
 
 const routes: Routes = [
   { path: '', component: SettingsComponent },
@@ -32,7 +31,6 @@ const routes: Routes = [
   { path: routectlg.SETTINGS_CATEGORY_RULES, component: CategoryRulesComponent },
   { path: routectlg.SETTINGS_RECURRENT_TRANSACTIONS, component: RecurrentTransactionsComponent },
   { path: routectlg.SETTINGS_DUPLICATE_DETECTION_RULES, component: DuplicateDetectionRulesComponent },
-  { path: routectlg.SETTINGS_SNAPSHOTS, component: SnapshotsComponent },
   { path: routectlg.SETTINGS_SAVINGS_GOALS, component: SavingsGoalsComponent },
   { path: routectlg.SETTINGS_DATA_MANAGEMENT, component: DataManagementComponent },
   { path: 'clear-storage', component: ClearStorageComponent }
@@ -52,7 +50,6 @@ const routes: Routes = [
     CategoryRulesComponent,
     RecurrentTransactionsComponent,
     RecurrentTransactionDialogComponent,
-    SnapshotsComponent,
     DuplicateDetectionRulesComponent,
     DuplicateDetectionRulesDialogComponent,
     ClearStorageComponent,

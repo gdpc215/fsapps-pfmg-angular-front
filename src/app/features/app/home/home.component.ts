@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { TestService } from '../../../logic/services/test.service';
 
 @Component({
   selector: 'app-home',
@@ -9,7 +8,6 @@ import { TestService } from '../../../logic/services/test.service';
 export class HomeComponent {
 
   constructor(
-    private testService: TestService
   ) { }
 
   welcomeMessage = 'Welcome to our application!';

@@ -3,14 +3,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { CatalogRoutes } from '../../../application/app.routes.catalog';
 import { AccountService } from '../../../logic/services/account.service';
+import { CardBalanceSnapshotService } from '../../../logic/services/card-balance-snapshot.service';
 import { CategoryService } from '../../../logic/services/category.service';
 import { CurrencyService } from '../../../logic/services/currency.service';
-import { FinancialSourceService } from '../../../logic/services/financial-source.service';
 import { MovementService } from '../../../logic/services/movement.service';
-import { SnapshotService } from '../../../logic/services/snapshot.service';
 import { TransactionService } from '../../../logic/services/transaction.service';
-import { Account } from '../../../logic/types/account';
-import { BalanceSnapshot } from '../../../logic/types/balance-snapshot';
+import { Account, AccountType } from '../../../logic/types/account';
 import { Category } from '../../../logic/types/category';
 import { Currency } from '../../../logic/types/currency';
 import { Transaction, TransactionType } from '../../../logic/types/transaction';
@@ -31,8 +29,7 @@ export class MovementsComponent implements OnInit {
   categories: Category[] = [];
   topLevelCategories: Category[] = [];
 
-  displayedColumns = ['expand', 'date', 'payee', 'category', 'description', 'currency', 'amount', 'actions'];
-  expandedElement: Transaction | null = null;
+  displayedColumns = ['date', 'payee', 'category', 'description', 'currency', 'amount', 'actions'];
 
   // Filters
   selectedAccount: string | null = null;
@@ -58,8 +55,7 @@ export class MovementsComponent implements OnInit {
   private categoryService = inject(CategoryService);
   private currencyService = inject(CurrencyService);
   private transactionService = inject(TransactionService);
-  private financialSourceService = inject(FinancialSourceService);
-  private snapshotService = inject(SnapshotService);
+  private cardBalanceSnapshotService = inject(CardBalanceSnapshotService);
 
   ngOnInit(): void {
     this.loadData();
@@ -89,8 +85,8 @@ export class MovementsComponent implements OnInit {
     // Rebuild txMap and sourceNameMap for transfer lookups
     const allTx = this.transactionService.getCurrentTransactions();
     this.txMap = new Map(allTx.map(t => [t.id, t]));
-    const allSources = this.financialSourceService.getCurrentSources();
-    this.sourceNameMap = new Map(allSources.map(s => [s.id, s.name]));
+    const allAccounts = this.accountService.getAccountsSync();
+    this.sourceNameMap = new Map(allAccounts.map(a => [a.id, a.name]));
 
     if (this.selectedAccount) {
       this.movements = this.movementService.getMovementsByAccountOrCard(this.selectedAccount);
@@ -143,10 +139,6 @@ export class MovementsComponent implements OnInit {
     const linked = this.txMap.get(tx.linkedTransactionId);
     if (!linked) return '';
     return this.sourceNameMap.get(linked.sourceId) ?? '';
-  }
-
-  toggleRow(tx: Transaction): void {
-    this.expandedElement = this.expandedElement?.id === tx.id ? null : tx;
   }
 
   onAccountChange(): void {
@@ -246,12 +238,19 @@ export class MovementsComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result !== undefined && result !== null) {
-        const snapshot = new BalanceSnapshot();
-        snapshot.sourceId = account.id;
-        snapshot.currency = (account.currencyId as 'PEN' | 'USD') || 'PEN';
-        snapshot.balance = Number(result);
-        snapshot.datetime = new Date().toISOString();
-        this.snapshotService.addSnapshot(snapshot);
+         // For credit cards, create CardBalanceSnapshot; otherwise just update balance
+        if (account.type === AccountType.CREDIT) {
+           this.cardBalanceSnapshotService.addSnapshot({
+             accountId: account.id,
+             snapshotDate: new Date(),
+             owedAmount: Number(result),
+             notes: 'Manual checkpoint'
+           });
+         } else {
+           // For debit accounts, just update the current balance
+           account.currentBalance = Number(result);
+           this.accountService.updateAccount(account);
+         }
       }
     });
   }

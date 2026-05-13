@@ -1,17 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { combineLatest } from 'rxjs';
-import { BalanceService } from '../../../logic/services/balance.service';
-import { FinancialSourceService } from '../../../logic/services/financial-source.service';
+import { AccountService } from '../../../logic/services/account.service';
 import { RecurrentTransactionService } from '../../../logic/services/recurrent-transaction.service';
 import { SavingsGoalService } from '../../../logic/services/savings-goal.service';
 import { TransactionService } from '../../../logic/services/transaction.service';
-import { FinancialSource, FinancialSourceType } from '../../../logic/types/financial-source';
+import { Account, AccountType } from '../../../logic/types/account';
 import { RecurrentTransaction } from '../../../logic/types/recurrent-transaction';
 import { SavingsGoal } from '../../../logic/types/savings-goal';
 import { Transaction } from '../../../logic/types/transaction';
 
 interface SourceBalance {
-  source: FinancialSource;
+  source: Account;
   balance: number;
 }
 
@@ -25,29 +24,25 @@ export class DashboardComponent implements OnInit {
   upcomingObligations: RecurrentTransaction[] = [];
   recentTransactions: Transaction[] = [];
   savingsGoals: SavingsGoal[] = [];
+  AccountType = AccountType;
 
   private sourceMap = new Map<string, string>();
-  FinancialSourceType = FinancialSourceType;
 
   constructor(
-    private financialSourceService: FinancialSourceService,
-    private balanceService: BalanceService,
+    private accountService: AccountService,
     private recurrentTransactionService: RecurrentTransactionService,
     private transactionService: TransactionService,
     private savingsGoalService: SavingsGoalService
   ) {}
 
   ngOnInit(): void {
-    combineLatest([
-      this.financialSourceService.getSources(),
-      this.balanceService.changes$
-    ]).subscribe(([sources]) => {
-      this.sourceBalances = sources.map(source => ({
-        source,
-        balance: this.balanceService.getCurrentBalance(source.id)
+    combineLatest([this.accountService.getAccounts()]).subscribe(([accounts]) => {
+      this.sourceBalances = accounts.map((account) => ({
+        source: account,
+        balance: account.currentBalance
       }));
       this.sourceMap.clear();
-      sources.forEach(s => this.sourceMap.set(s.id, s.name));
+      accounts.forEach((account) => this.sourceMap.set(account.id, account.name));
     });
 
     this.upcomingObligations = this.recurrentTransactionService.getDueManualTransactions().slice(0, 5);

@@ -1,5 +1,3 @@
-import { SourceCurrency } from './financial-source';
-
 export enum TransactionType {
   INCOME = 'INCOME',
   EXPENSE = 'EXPENSE',
@@ -13,7 +11,7 @@ export class Transaction {
   sourceId: string;
   date: string | Date;
   amount: number;
-  currency: SourceCurrency | string;
+  currency: 'PEN' | 'USD' | string;
   amountPen?: number;
   exchangeRate?: number;
   description: string;

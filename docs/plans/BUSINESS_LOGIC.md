@@ -1,7 +1,7 @@
 # Business Logic Reference — fsapps-pfmg
 
-**Version:** 1.0
-**Date:** 2026-05-13
+**Version:** 1.1
+**Date:** 2026-05-14
 **Project:** fsapps-pfmg
 **Purpose:** Authoritative specification of all algorithms, decision trees, and rule systems. Whenever design documents (DESIGN.md, DESIGN_LOCAL.md) describe logic at a high level, this document provides the precise decision trees and pseudocode.
 
@@ -57,31 +57,49 @@ Each incoming row is annotated with:
 
 **Rule D1 — Debit Operation Number (AUTO_DUPLICATE, debit only)**
 - Applies only when `accountType === 'DEBIT_ACCOUNT'` and the incoming row has a `strOperationNumber`.
-- Condition: `existing.strOperationNumber === incoming.strOperationNumber AND existing.dateTransaction === incoming.fecha`
+- Condition:
+  - `existing.strOperationNumber === incoming.strOperationNumber` AND
+  - `existing.dateTransaction === incoming.dateTransaction`
 - Result: `AUTO_DUPLICATE`, `checked = false`
 
 **Rule A1 — Exact Match (AUTO_DUPLICATE, both account types)**
-- Condition: `existing.dateTransaction === incoming.fecha AND existing.strDescription === incoming.descripcion AND existing.strCurrency === incoming.moneda AND existing.decAmount === incoming.monto`
+- Condition:
+  - `existing.dateTransaction === incoming.dateTransaction` AND
+  - `existing.strDescription === incoming.description` AND
+  - `existing.strCurrency === incoming.currency` AND
+  - `existing.decAmount === incoming.amount`
 - Result: `AUTO_DUPLICATE`, `checked = false`
 
 **Rule A2 — USD Floating Date (AUTO_DUPLICATE, USD only)**
-- Applies only when `incoming.moneda === 'USD'`.
-- Condition: `existing.strCurrency === 'USD' AND existing.strDescription === incoming.descripcion AND existing.decAmount === incoming.monto AND |daysDiff(existing.dateTransaction, incoming.fecha)| <= 3`
+- Applies only when `incoming.currency === 'USD'`.
+- Condition:
+  - `existing.strCurrency === 'USD'` AND
+  - `existing.strDescription === incoming.description` AND
+  - `existing.decAmount === incoming.amount` AND
+  - `|daysDiff(existing.dateTransaction, incoming.dateTransaction)| <= 3`
 - Result: `AUTO_DUPLICATE`, `checked = false`
 
 **Rule P1 — Prefix + Amount + Date (POTENTIAL_DUPLICATE)**
-- Condition: `existing.decAmount === incoming.monto AND lower(existing.strDescription[0:10]) === lower(incoming.descripcion[0:10]) AND |daysDiff| <= 3`
+- Condition:
+  - `existing.decAmount === incoming.amount` AND
+  - `lower(existing.strDescription[0:10]) === lower(incoming.description[0:10])` AND
+  - `|daysDiff| <= 3`
 - Result: `POTENTIAL_DUPLICATE`, `checked = true`, `matchingTransaction = existing`
 
 **Rule P2 — Amount + Date (POTENTIAL_DUPLICATE)**
-- Condition: `existing.decAmount === incoming.monto AND |daysDiff| <= 3`
+- Condition:
+  - `existing.decAmount === incoming.amount` AND
+  - `|daysDiff| <= 3`
 - Result: `POTENTIAL_DUPLICATE`, `checked = true`, `matchingTransaction = existing`
 
 **Rule P3 — Collection-Based (POTENTIAL_DUPLICATE)**
 - For each `DuplicationCollection`:
-  - If any collection string is contained in `incoming.descripcion` (case-insensitive)
+  - If any collection string is contained in `incoming.description` (case-insensitive)
   - AND an existing transaction's `strDescription` also contains any collection string (case-insensitive)
-  - AND `existing.decAmount === incoming.monto AND existing.strCurrency === incoming.moneda AND |daysDiff| <= 3`
+  - Condition:
+    - `existing.decAmount === incoming.amount` AND
+    - `existing.strCurrency === incoming.currency` AND
+    - `|daysDiff| <= 3`
   - Result: `POTENTIAL_DUPLICATE`, `checked = true`, `matchingTransaction = existing`
 
 **Default (no rule matched):**
@@ -93,36 +111,36 @@ Each incoming row is annotated with:
 function annotateRow(row, existing, collections, accountType):
   if accountType == DEBIT_ACCOUNT and row.strOperationNumber is not null:
     match = find existing where strOperationNumber == row.strOperationNumber
-                              and dateTransaction == row.fecha
+                              and dateTransaction == row.dateTransaction
     if match: return AUTO_DUPLICATE(match)
 
-  match = find existing where dateTransaction == row.fecha
-                            and strDescription == row.descripcion
-                            and strCurrency == row.moneda
-                            and decAmount == row.monto
+  match = find existing where dateTransaction == row.dateTransaction
+                            and strDescription == row.description
+                            and strCurrency == row.currency
+                            and decAmount == row.amount
   if match: return AUTO_DUPLICATE(match)
 
-  if row.moneda == USD:
-    match = find existing where strCurrency == USD
-                              and strDescription == row.descripcion
-                              and decAmount == row.monto
+  if row.currency == 'USD':
+    match = find existing where strCurrency == 'USD'
+                              and strDescription == row.description
+                              and decAmount == row.amount
                               and |daysDiff| <= 3
     if match: return AUTO_DUPLICATE(match)
 
-  desc10 = lower(row.descripcion[0:10])
-  match = find existing where decAmount == row.monto
+  desc10 = lower(row.description[0:10])
+  match = find existing where decAmount == row.amount
                             and lower(strDescription[0:10]) == desc10
                             and |daysDiff| <= 3
   if match: return POTENTIAL_DUPLICATE(match)
 
-  match = find existing where decAmount == row.monto and |daysDiff| <= 3
+  match = find existing where decAmount == row.amount and |daysDiff| <= 3
   if match: return POTENTIAL_DUPLICATE(match)
 
   for each collection in collections:
-    if any collection.string is contained in row.descripcion (case-insensitive):
+    if any collection.string is contained in row.description (case-insensitive):
       match = find existing where (any collection.string in strDescription)
-                                and decAmount == row.monto
-                                and strCurrency == row.moneda
+                                and decAmount == row.amount
+                                and strCurrency == row.currency
                                 and |daysDiff| <= 3
       if match: return POTENTIAL_DUPLICATE(match)
 
@@ -452,14 +470,16 @@ Transitions not listed above are not supported by the UI (e.g., `DELETED → PEN
 
 ### 7.3 PENDING during import wizard
 
-During the import wizard review step (Step 2), the context menu on each incoming transaction row includes "Mark as Pending". If selected:
+During the import wizard Step 2 (Review), the context menu on each incoming transaction row includes "Mark as Pending". If selected:
 
-- That row's `annotatedRow.pendingFlag = true`
-- On confirm, the transaction is saved with `strStatus = 'PENDING'` instead of `'ACTIVE'`
+- That row's `annotatedRow.pendingFlag = true` (stored in-memory)
+- In Step 3 (Finalize), on "Save & Finish", the transaction is saved with `strStatus = 'PENDING'` instead of `'ACTIVE'`
 
 ---
 
 ## 8 — Import Wizard Decision Flow
+
+The import wizard has **three steps**: Upload → Review → Finalize. No localStorage writes occur until Step 3. Steps 1 and 2 are purely in-memory.
 
 ### 8.1 Step 1 — Upload
 
@@ -471,16 +491,17 @@ User inputs:
   - usdExchangeRate (always required, even for PEN-only files; default 1.0 for PEN)
 
 On "Next":
-  1. Parse xlsx -> RawImportRow[] (includes strOperationNumber for debit accounts)
-  2. For each row:
-       decAmountPen = (moneda == PEN) ? monto : monto * usdExchangeRate
-  3. Call DuplicationLogicService.annotate(rows, existingActive, collections, accountType)
-  4. Call CategoryMatchingService.match(description, rules) for each row
+  1. Parse xlsx -> RawImportRow[] via ExcelParserService.parseFile(file, usdExchangeRate)
+       Each row includes amountPen, computed inline by the parser:
+         amountPen = (currency == 'PEN') ? amount : amount * usdExchangeRate
+  2. Call DuplicationLogicService.annotate(rows, existingActive, collections, accountType)
+  3. Call CategoryMatchingService.match(description, rules) for each row
        -> pre-populate subcategoryId
-  5. Find earliestDate = min(rows[].fecha)
+  4. Find earliestDate = min(rows[].dateTransaction)
      contextTransactions = ACTIVE transactions for accountId where dateTransaction in
        [earliestDate - 5 days, earliestDate - 1 day]
-  6. Store all in ImportWizardState, navigate to Step 2
+  5. Store all in ImportWizardState, navigate to Step 2
+     No localStorage writes in this step.
 ```
 
 ### 8.2 Step 2 — Review
@@ -496,55 +517,98 @@ Display:
       - "Mark as Pending"    -> sets pendingFlag = true on the row
 
   - Below incoming rows: context transactions (from 5 days before)
-      - Each with trash icon -> softDelete(transaction.id)
+      - Each with trash icon -> softDelete(transaction.id)  [only localStorage write in Step 2]
 
-On "Confirm":
+On "Next →":
+  1. Persist any subcategory / note / pendingFlag changes to ImportWizardState
+  2. Navigate to Step 3
+     No ImportBatch or Transaction records are created.
+```
+
+### 8.3 Step 3 — Finalize
+
+```
+Display:
+  - Read-only summary: account name, transactions-to-import count, auto-duplicates skipped,
+    exchange rate applied, pending transactions count
+
+On "Save & Finish":
   1. Create ImportBatch:
        { accountId, accountType, dateImport: today, decUsdExchangeRate,
-         decBalanceAtImport: -abs(currentBalance) }
+         decBalanceAtImport: (accountType == CREDIT_CARD) ? -abs(currentBalance) : currentBalance }
 
   2. Filter rows to checked == true
 
-  3. For each checked row:
-       strStatus = row.pendingFlag ? 'PENDING' : 'ACTIVE'
-       Save Transaction { accountId, accountType, importBatchId, dateTransaction,
-         strDescription, strCurrency, decAmount, decAmountPen, subcategoryId,
-         strNotes, strStatus, strOperationNumber }
+  3. For each checked row, build Transaction:
+       { accountId, accountType, importBatchId: batch.id,
+         dateTransaction:    row.dateTransaction,
+         strDescription:     row.description,
+         strCurrency:        row.currency,
+         decAmount:          row.amount,
+         decAmountPen:       row.amountPen,       // pre-computed by parser; no re-conversion
+         subcategoryId:      row.subcategoryId,
+         strNotes:           row.note,
+         strOperationNumber: row.strOperationNumber,
+         strStatus:          row.pendingFlag ? 'PENDING' : 'ACTIVE' }
 
-  4. saveMany(allCheckedTransactions) — single localStorage write
+  4. transactionService.saveMany(allCheckedTransactions) — single localStorage write
 
   5. Update account.decCurrentBalance:
        credit card: -abs(currentBalance)
        debit account: abs(currentBalance)
 
-  6. Reset ImportWizardState
-  7. Navigate to transaction list for accountId
+  6. Run automatic recurrent matching against the current cycle:
+       allActive = transactionService.getActive()   // includes just-saved rows
+       newMatches = recurrentMatchingService.findAutomaticMatches(
+           recurrents, existingMatches, allActive, todayDate)
+       for each result in newMatches:
+           recurrentTransactionService.saveMatch({
+               recurrentTransactionId, strIterationKey, transactionId,
+               boolDone: true, dateDone: today, strMatchMode: 'AUTOMATIC' })
+
+  7. Reset ImportWizardState
   8. Check storage usage; warn if > 4 MB
+  9. Navigate to ROUTES.CONCILIATION
+
+localStorage writes per step:
+  Step 1: none
+  Step 2: soft-deletes only (context transactions trash icon)
+  Step 3: pfmg_import_batches, pfmg_transactions,
+          pfmg_credit_cards / pfmg_debit_accounts (balance update),
+          pfmg_recurrent_matches (0–N new records)
 ```
 
 ---
 
 ## 9 — Excel Parsing Rules
 
+Column header constants are defined at the top of `ExcelParserService` for easy maintenance when the bank changes its export format. All fields below refer to `RawImportRow` (declared in `import-batch.model.ts`).
+
 ### 9.1 Credit card Excel columns
 
-| Column header | Field | Notes |
-|---|---|---|
-| `Fecha` | `dateTransaction` | Date; SheetJS parses as JS Date when `cellDates: true` |
-| `Descripcion` | `strDescription` | String; trimmed |
-| `Moneda` | `strCurrency` | `'S/'` → `'PEN'`; `'$'` → `'USD'` |
-| `Monto` | `decAmount` | Number; sign preserved as-is |
+| Column header constant | Column header value | `RawImportRow` field | Notes |
+|---|---|---|---|
+| `COL_FECHA` | `'Fecha'` | `dateTransaction` | Date; SheetJS returns JS Date when `cellDates: true`; formatted as `YYYY-MM-DD` |
+| `COL_DESCRIPCION` | `'Descripcion'` | `description` | String; trimmed |
+| `COL_MONEDA` | `'Moneda'` | `currency` | `'S/'` → `'PEN'`; `'$'` → `'USD'` |
+| `COL_MONTO` | `'Monto'` | `amount` | Number; sign preserved as-is from file |
+| *(computed)* | — | `amountPen` | `(currency === 'PEN') ? amount : amount * usdExchangeRate`; computed at parse time |
 
 ### 9.2 Debit account Excel columns
 
 Same as credit card plus:
 
-| Column header | Field | Notes |
-|---|---|---|
-| `N° Operacion` (or `Operacion`) | `strOperationNumber` | String; used for D1 dupe detection |
+| Column header constant | Column header value | `RawImportRow` field | Notes |
+|---|---|---|---|
+| `COL_OPERACION` | `'N° Operacion'` | `strOperationNumber` | String; used for D1 dupe detection |
+| `COL_OPERACION_ALT` | `'Operacion'` | `strOperationNumber` | Fallback if primary column is absent |
 
-If the operation number column is absent, parsing continues without it (debit transactions without operation numbers fall through to A1/A2/P1/P2/P3 rules).
+If both operation number columns are absent, `strOperationNumber` is `undefined` and the row falls through to rules A1/A2/P1/P2/P3.
 
 ### 9.3 Row filtering
 
 Rows where `Fecha`, `Descripcion`, `Moneda`, or `Monto` are null/empty are silently discarded before annotation.
+
+### 9.4 amountPen computation
+
+`amountPen` is always computed by `ExcelParserService.parseFile()` at parse time using the `usdExchangeRate` parameter. Downstream services and Step 3 of the wizard use `row.amountPen` directly — there is no re-conversion at any later stage.

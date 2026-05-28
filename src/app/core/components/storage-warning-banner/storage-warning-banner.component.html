@@ -1,0 +1,5 @@
+<div *ngIf="visible && !dismissed"
+     class="flex items-center justify-between bg-amber-100 border border-amber-400 text-amber-800 px-4 py-2 rounded mb-4">
+  <span>Warning: localStorage is nearly full (over 4 MB used). Consider exporting and clearing old data.</span>
+  <button class="ml-4 font-bold hover:text-amber-900" (click)="dismissed = true">×</button>
+</div>

@@ -1,0 +1,65 @@
+<mat-nav-list>
+
+  <div class="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-3">Accounts</div>
+  <a mat-list-item routerLink="/credit-cards" routerLinkActive="active">
+    <mat-icon matListItemIcon>credit_card</mat-icon>
+    <span matListItemTitle>Credit Cards</span>
+  </a>
+  <a mat-list-item routerLink="/debit-accounts" routerLinkActive="active">
+    <mat-icon matListItemIcon>account_balance</mat-icon>
+    <span matListItemTitle>Debit Accounts</span>
+  </a>
+
+  <div class="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-3">Import</div>
+  <a mat-list-item routerLink="/import" routerLinkActive="active">
+    <mat-icon matListItemIcon>upload_file</mat-icon>
+    <span matListItemTitle>Import Wizard</span>
+  </a>
+
+  <div class="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-3">Analysis</div>
+  <a mat-list-item routerLink="/dashboard/monthly" routerLinkActive="active">
+    <mat-icon matListItemIcon>bar_chart</mat-icon>
+    <span matListItemTitle>Monthly Dashboard</span>
+  </a>
+  <a mat-list-item routerLink="/dashboard/cycle" routerLinkActive="active">
+    <mat-icon matListItemIcon>loop</mat-icon>
+    <span matListItemTitle>Cycle Dashboard</span>
+  </a>
+  <a mat-list-item routerLink="/explorer" routerLinkActive="active">
+    <mat-icon matListItemIcon>search</mat-icon>
+    <span matListItemTitle>Explorer</span>
+  </a>
+
+  <div class="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-3">Management</div>
+  <a mat-list-item routerLink="/conciliation" routerLinkActive="active">
+    <mat-icon matListItemIcon>sync</mat-icon>
+    <span matListItemTitle>Conciliation</span>
+  </a>
+  <a mat-list-item routerLink="/recurrent-transactions" routerLinkActive="active">
+    <mat-icon matListItemIcon>repeat</mat-icon>
+    <span matListItemTitle>Recurrent Transactions</span>
+  </a>
+  <a mat-list-item routerLink="/recurrent-transactions/dashboard" routerLinkActive="active">
+    <mat-icon matListItemIcon>dashboard</mat-icon>
+    <span matListItemTitle>Recurrent Dashboard</span>
+  </a>
+
+  <div class="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-3">Config</div>
+  <a mat-list-item routerLink="/categories" routerLinkActive="active">
+    <mat-icon matListItemIcon>category</mat-icon>
+    <span matListItemTitle>Categories</span>
+  </a>
+  <a mat-list-item routerLink="/categories/rules" routerLinkActive="active">
+    <mat-icon matListItemIcon>tune</mat-icon>
+    <span matListItemTitle>Rules</span>
+  </a>
+  <a mat-list-item routerLink="/categories/duplications" routerLinkActive="active">
+    <mat-icon matListItemIcon>filter_list</mat-icon>
+    <span matListItemTitle>Duplication Collections</span>
+  </a>
+  <a mat-list-item routerLink="/settings" routerLinkActive="active">
+    <mat-icon matListItemIcon>settings</mat-icon>
+    <span matListItemTitle>Settings</span>
+  </a>
+
+</mat-nav-list>

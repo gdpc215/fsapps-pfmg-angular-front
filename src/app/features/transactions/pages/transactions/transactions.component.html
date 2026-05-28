@@ -1,0 +1,37 @@
+<div class="p-4">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-semibold">Transactions</h1>
+    <a mat-raised-button routerLink="/explorer">Go to Explorer</a>
+  </div>
+
+  <div *ngIf="transactions.length === 0" class="text-gray-500 text-center py-12">
+    No transactions yet.
+  </div>
+
+  <mat-table *ngIf="transactions.length > 0" [dataSource]="transactions">
+    <ng-container matColumnDef="date">
+      <mat-header-cell *matHeaderCellDef>Date</mat-header-cell>
+      <mat-cell *matCellDef="let t" class="font-mono text-sm">{{ t.dateTransaction | date:'dd/MM/yyyy' }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="account">
+      <mat-header-cell *matHeaderCellDef>Account</mat-header-cell>
+      <mat-cell *matCellDef="let t">{{ resolveAccountName(t) }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="description">
+      <mat-header-cell *matHeaderCellDef>Description</mat-header-cell>
+      <mat-cell *matCellDef="let t" class="truncate max-w-xs">{{ t.strDescription }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="amount">
+      <mat-header-cell *matHeaderCellDef>Amount</mat-header-cell>
+      <mat-cell *matCellDef="let t"><app-amount-display [value]="t.decAmountPen"></app-amount-display></mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="status">
+      <mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
+      <mat-cell *matCellDef="let t">
+        <span *ngIf="t.strStatus === 'PENDING'" class="text-xs bg-amber-100 text-amber-700 px-1 rounded">PENDING</span>
+      </mat-cell>
+    </ng-container>
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+  </mat-table>
+</div>

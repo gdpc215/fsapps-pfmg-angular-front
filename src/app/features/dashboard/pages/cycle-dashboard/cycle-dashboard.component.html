@@ -1,0 +1,74 @@
+<div class="p-4">
+  <h1 class="text-2xl font-semibold mb-6">Cycle Dashboard</h1>
+
+  <div *ngIf="cardSummaries.length === 0" class="text-gray-500 text-center py-12">
+    No credit cards configured. Add one to see cycle summaries
+    <a routerLink="/credit-cards" class="text-blue-600 underline">→</a>
+  </div>
+
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <mat-card *ngFor="let data of cardSummaries">
+      <mat-card-header>
+        <mat-card-title>{{ data.card.strName }}</mat-card-title>
+        <mat-card-subtitle>
+          Cycle: {{ data.cycleWindow.cycleStart | date:'dd/MM/yyyy' }} → {{ data.cycleWindow.closingDate | date:'dd/MM/yyyy' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-divider class="my-3"></mat-divider>
+
+        <ng-container *ngIf="data.transactionCount === 0">
+          <p class="text-sm text-gray-500 italic">
+            No transactions in current cycle
+            ({{ data.cycleWindow.cycleStart | date:'dd/MM/yyyy' }} → {{ data.cycleWindow.closingDate | date:'dd/MM/yyyy' }}).
+          </p>
+        </ng-container>
+
+        <ng-container *ngIf="data.transactionCount > 0">
+          <div class="space-y-1 text-sm mb-4">
+            <div class="flex justify-between">
+              <span class="text-gray-600">Expenses:</span>
+              <span class="text-red-600 font-mono">S/ {{ data.totalExpenses | number:'1.2-2' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Payments:</span>
+              <span class="text-green-600 font-mono">S/ {{ data.totalPayments | number:'1.2-2' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Transactions:</span>
+              <span>{{ data.transactionCount }}</span>
+            </div>
+          </div>
+
+          <mat-divider class="mb-3"></mat-divider>
+        </ng-container>
+
+        <div class="text-sm">
+          <p class="text-gray-600">
+            Balance at last import:
+            <span class="font-mono font-medium"
+                  [class.text-red-600]="data.balanceAtLastImport < 0"
+                  [class.text-green-600]="data.balanceAtLastImport >= 0">
+              <app-amount-display [value]="data.balanceAtLastImport"></app-amount-display>
+            </span>
+          </p>
+          <p *ngIf="data.balanceImportDate" class="text-xs text-gray-400">
+            as of {{ data.balanceImportDate | date:'dd/MM/yyyy' }}
+          </p>
+          <p *ngIf="!data.balanceImportDate" class="text-xs text-gray-400">
+            No import data available
+          </p>
+        </div>
+
+        <ng-container *ngIf="data.topSubcategories.length > 0">
+          <mat-divider class="my-3"></mat-divider>
+          <p class="text-sm font-medium text-gray-700 mb-1">Top spending:</p>
+          <div *ngFor="let sub of data.topSubcategories" class="flex justify-between text-sm">
+            <span class="text-gray-600">{{ sub.subcategoryName }}</span>
+            <app-amount-display [value]="sub.total"></app-amount-display>
+          </div>
+        </ng-container>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

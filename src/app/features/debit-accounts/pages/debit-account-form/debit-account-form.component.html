@@ -1,0 +1,17 @@
+<div class="p-4 max-w-md">
+  <h1 class="text-2xl font-semibold mb-6">{{ isEdit ? 'Edit Debit Account' : 'New Debit Account' }}</h1>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+    <mat-form-field appearance="outline">
+      <mat-label>Account name</mat-label>
+      <input matInput formControlName="strName" placeholder="e.g. BCP Savings">
+      <mat-error *ngIf="form.get('strName')?.hasError('required')">Name is required</mat-error>
+      <mat-error *ngIf="form.get('strName')?.hasError('maxlength')">Max 100 characters</mat-error>
+    </mat-form-field>
+
+    <div class="flex gap-3">
+      <button mat-raised-button color="primary" type="submit">Save</button>
+      <button mat-button type="button" routerLink="/debit-accounts">Cancel</button>
+    </div>
+  </form>
+</div>

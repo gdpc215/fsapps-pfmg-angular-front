@@ -28,3 +28,7 @@ body {
   height: 100svh !important;
   margin: 0;
 }
+
+/* Snackbar theme overrides */
+.snack-success .mdc-snackbar__surface { background-color: #16a34a !important; }
+.snack-error   .mdc-snackbar__surface { background-color: #dc2626 !important; }

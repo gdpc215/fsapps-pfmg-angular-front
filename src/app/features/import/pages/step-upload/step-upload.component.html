@@ -1,0 +1,55 @@
+<div class="py-4 max-w-lg">
+  <form [formGroup]="form" class="flex flex-col gap-4">
+    <!-- Account selector -->
+    <mat-form-field appearance="outline">
+      <mat-label>Account</mat-label>
+      <mat-select formControlName="accountId" (selectionChange)="onAccountSelect($event.value)">
+        <mat-optgroup label="Credit Cards">
+          <mat-option *ngFor="let card of creditCards$ | async" [value]="card.id">
+            {{ card.strName }}
+          </mat-option>
+        </mat-optgroup>
+        <mat-optgroup label="Debit Accounts">
+          <mat-option *ngFor="let acc of debitAccounts$ | async" [value]="acc.id">
+            {{ acc.strName }}
+          </mat-option>
+        </mat-optgroup>
+      </mat-select>
+      <mat-error>Account is required</mat-error>
+    </mat-form-field>
+
+    <!-- Current balance -->
+    <mat-form-field appearance="outline">
+      <mat-label>Current balance (from statement)</mat-label>
+      <input matInput type="number" formControlName="currentBalance" min="0" step="0.01">
+      <mat-error>Required</mat-error>
+    </mat-form-field>
+
+    <!-- Exchange rate -->
+    <mat-form-field appearance="outline">
+      <mat-label>USD exchange rate (PEN per USD)</mat-label>
+      <input matInput type="number" formControlName="usdExchangeRate" min="0.01" step="0.01">
+      <mat-error>Must be > 0</mat-error>
+      <mat-hint *ngIf="!hasUsdRows">Only needed if file has USD transactions</mat-hint>
+    </mat-form-field>
+
+    <!-- File input -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Excel file (.xlsx)</label>
+      <input type="file" accept=".xlsx" (change)="onFileSelect($event)" class="block">
+      <p *ngIf="fileError" class="text-red-600 text-sm mt-1">{{ fileError }}</p>
+      <p *ngIf="selectedFile" class="text-green-600 text-sm mt-1">{{ selectedFile.name }}</p>
+    </div>
+
+    <div *ngIf="hasMultipleSheets" class="p-3 bg-amber-50 border border-amber-300 rounded text-sm text-amber-800">
+      Note: The file has multiple sheets. Only the first sheet was imported.
+    </div>
+
+    <div class="flex gap-3 mt-2">
+      <button mat-raised-button color="primary" type="button" (click)="onNext()" [disabled]="isLoading">
+        <mat-spinner *ngIf="isLoading" diameter="16" class="inline-block mr-2"></mat-spinner>
+        Next →
+      </button>
+    </div>
+  </form>
+</div>

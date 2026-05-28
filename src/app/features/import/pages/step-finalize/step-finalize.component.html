@@ -1,0 +1,33 @@
+<div class="py-4 max-w-md">
+  <h2 class="text-lg font-semibold mb-4">Review &amp; Confirm</h2>
+
+  <ng-container *ngIf="stateService.state$ | async as state">
+    <div class="bg-gray-50 rounded p-4 mb-4 flex flex-col gap-2 text-sm">
+      <div class="flex justify-between">
+        <span class="text-gray-600">Account</span>
+        <span class="font-medium">{{ accountName }}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-gray-600">Transactions to import</span>
+        <span class="font-medium">{{ checkedCount }}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-gray-600">Auto-duplicates skipped</span>
+        <span class="font-medium">{{ skippedCount }}</span>
+      </div>
+      <div class="flex justify-between" *ngIf="state.usdExchangeRate !== 1">
+        <span class="text-gray-600">Exchange rate</span>
+        <span class="font-medium">S/ {{ state.usdExchangeRate }} / USD</span>
+      </div>
+      <div class="flex justify-between" *ngIf="pendingCount > 0">
+        <span class="text-gray-600">Marked as pending</span>
+        <span class="font-medium">{{ pendingCount }}</span>
+      </div>
+    </div>
+  </ng-container>
+
+  <div class="flex gap-3">
+    <button mat-raised-button color="primary" (click)="onSave()">Save &amp; Finish</button>
+    <button mat-button (click)="stepper.previous()">&#8592; Back</button>
+  </div>
+</div>

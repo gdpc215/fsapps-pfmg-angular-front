@@ -1,0 +1,106 @@
+<div class="p-4">
+  <h1 class="text-2xl font-semibold mb-4">Transaction Explorer</h1>
+
+  <!-- Filter panel -->
+  <div [formGroup]="filterForm" class="flex flex-wrap gap-3 mb-4 p-3 bg-gray-50 rounded">
+    <ng-container *ngIf="{ cats: categories$ | async, subs: subcategories$ | async } as vm">
+      <mat-form-field appearance="outline" class="w-44">
+        <mat-label>Category</mat-label>
+        <mat-select formControlName="categoryId">
+          <mat-option [value]="null">All categories</mat-option>
+          <mat-option *ngFor="let cat of vm.cats" [value]="cat.id">{{ cat.strName }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-44">
+        <mat-label>Subcategory</mat-label>
+        <mat-select formControlName="subcategoryId" [disabled]="!filterForm.value.categoryId">
+          <mat-option [value]="null">All</mat-option>
+          <mat-option *ngFor="let sub of getSubcategoriesForSelected()" [value]="sub.id">{{ sub.strName }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </ng-container>
+
+    <ng-container *ngIf="{ cards: creditCards$ | async, accs: debitAccounts$ | async } as vm2">
+      <mat-form-field appearance="outline" class="w-44">
+        <mat-label>Account</mat-label>
+        <mat-select formControlName="accountId">
+          <mat-option [value]="null">All accounts</mat-option>
+          <mat-optgroup label="Credit Cards">
+            <mat-option *ngFor="let c of vm2.cards" [value]="c.id">{{ c.strName }}</mat-option>
+          </mat-optgroup>
+          <mat-optgroup label="Debit Accounts">
+            <mat-option *ngFor="let a of vm2.accs" [value]="a.id">{{ a.strName }}</mat-option>
+          </mat-optgroup>
+        </mat-select>
+      </mat-form-field>
+    </ng-container>
+
+    <mat-form-field appearance="outline" class="w-52">
+      <mat-label>Search description</mat-label>
+      <input matInput formControlName="textSearch" placeholder="...">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-36">
+      <mat-label>Date from</mat-label>
+      <input matInput type="date" formControlName="dateFrom">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-36">
+      <mat-label>Date to</mat-label>
+      <input matInput type="date" formControlName="dateTo">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-28">
+      <mat-label>Min amount</mat-label>
+      <input matInput type="number" formControlName="amountMin" min="0" step="0.01">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-28">
+      <mat-label>Max amount</mat-label>
+      <input matInput type="number" formControlName="amountMax" min="0" step="0.01">
+    </mat-form-field>
+  </div>
+
+  <!-- Empty states -->
+  <div *ngIf="!hasFilters && filteredTransactions.length === 0" class="text-gray-500 text-center py-12">
+    Use the filters above to explore your transactions.
+  </div>
+  <div *ngIf="hasFilters && filteredTransactions.length === 0" class="text-gray-500 text-center py-12">
+    No transactions match your current filters.
+  </div>
+
+  <!-- Results table -->
+  <mat-table *ngIf="filteredTransactions.length > 0" [dataSource]="filteredTransactions">
+    <ng-container matColumnDef="date">
+      <mat-header-cell *matHeaderCellDef>Date</mat-header-cell>
+      <mat-cell *matCellDef="let t" class="font-mono text-sm">{{ t.dateTransaction | date:'dd/MM/yyyy' }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="account">
+      <mat-header-cell *matHeaderCellDef>Account</mat-header-cell>
+      <mat-cell *matCellDef="let t">{{ resolveAccountName(t) }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="description">
+      <mat-header-cell *matHeaderCellDef>Description</mat-header-cell>
+      <mat-cell *matCellDef="let t" class="truncate max-w-xs">{{ t.strDescription }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="amount">
+      <mat-header-cell *matHeaderCellDef>Amount</mat-header-cell>
+      <mat-cell *matCellDef="let t"><app-amount-display [value]="t.decAmountPen"></app-amount-display></mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="status">
+      <mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
+      <mat-cell *matCellDef="let t">
+        <span *ngIf="t.strStatus === 'PENDING'" class="text-xs bg-amber-100 text-amber-700 px-1 rounded">PENDING</span>
+      </mat-cell>
+    </ng-container>
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+  </mat-table>
+
+  <!-- Aggregate -->
+  <div *ngIf="filteredTransactions.length > 0" class="mt-3 text-sm text-gray-600 flex gap-4">
+    <span>{{ filteredTransactions.length }} transactions</span>
+    <span>Total: <app-amount-display [value]="aggregateTotal"></app-amount-display></span>
+  </div>
+</div>

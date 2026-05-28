@@ -1,0 +1,67 @@
+<div class="py-4">
+  <div *ngIf="allAutoDuplicate" class="p-3 bg-amber-50 border border-amber-300 rounded text-sm text-amber-800 mb-4">
+    All rows appear to be duplicates of existing transactions.
+  </div>
+
+  <!-- Rows -->
+  <div *ngFor="let row of rows; let i = index"
+       [class.opacity-50]="row.flag === 'AUTO_DUPLICATE'"
+       [class.bg-yellow-50]="row.flag === 'POTENTIAL_DUPLICATE'"
+       class="border-b py-2 px-2">
+    <div class="flex items-center gap-3">
+      <mat-checkbox
+        [(ngModel)]="row.checked"
+        [disabled]="row.flag === 'AUTO_DUPLICATE'">
+      </mat-checkbox>
+      <div class="flex-1">
+        <div class="flex items-center gap-2 text-sm">
+          <span class="text-gray-500 font-mono">{{ row.raw.dateTransaction }}</span>
+          <span class="flex-1">{{ row.raw.description }}</span>
+          <span [class.text-red-600]="row.raw.amount < 0" [class.text-green-600]="row.raw.amount >= 0"
+                class="font-mono">{{ row.raw.amountPen | currencyPen }}</span>
+        </div>
+        <div class="flex gap-2 mt-1">
+          <span *ngIf="row.flag === 'AUTO_DUPLICATE'" class="text-xs text-gray-400 italic">Auto-duplicate (skipped)</span>
+          <span *ngIf="row.flag === 'POTENTIAL_DUPLICATE'" class="text-xs text-yellow-700">&#9888; Potential duplicate</span>
+          <span *ngIf="row.pendingFlag" class="text-xs bg-amber-200 text-amber-800 px-1 rounded">PENDING</span>
+          <span *ngIf="row.note" class="text-xs text-blue-600">Note: {{ row.note }}</span>
+        </div>
+        <div *ngIf="showNoteFor === i" class="mt-1 flex gap-2">
+          <input class="border rounded px-2 py-0.5 text-sm flex-1" [(ngModel)]="noteInputs[i]" placeholder="Add a note...">
+          <button mat-button (click)="saveNote(i)">Save</button>
+        </div>
+      </div>
+      <button mat-icon-button [matMenuTriggerFor]="rowMenu" *ngIf="row.flag !== 'AUTO_DUPLICATE'">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #rowMenu>
+        <button mat-menu-item (click)="toggleNote(i)">Add note</button>
+        <button mat-menu-item (click)="markPending(i)">Mark as Pending</button>
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- Context transactions -->
+  <div *ngIf="contextTransactions.length > 0" class="mt-6">
+    <mat-divider class="mb-3"></mat-divider>
+    <p class="text-sm font-medium text-gray-600 mb-2">Transactions just before this import</p>
+    <div *ngFor="let t of contextTransactions"
+         [class.line-through]="pendingDeletions.has(t.id)"
+         [class.opacity-50]="pendingDeletions.has(t.id)"
+         class="flex items-center gap-3 py-1 border-b text-sm">
+      <span class="font-mono text-gray-500">{{ t.dateTransaction }}</span>
+      <span class="flex-1 truncate">{{ t.strDescription }}</span>
+      <app-amount-display [value]="t.decAmountPen"></app-amount-display>
+      <button mat-icon-button (click)="togglePendingDeletion(t.id)">
+        <mat-icon [class.text-red-500]="!pendingDeletions.has(t.id)">
+          {{ pendingDeletions.has(t.id) ? 'undo' : 'delete' }}
+        </mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="flex gap-3 mt-6">
+    <button mat-button (click)="onBack()">&#8592; Back</button>
+    <button mat-raised-button color="primary" (click)="onNext()">Next &#8594;</button>
+  </div>
+</div>

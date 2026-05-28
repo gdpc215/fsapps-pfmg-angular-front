@@ -1,0 +1,49 @@
+<div class="p-4">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-semibold">Conciliation History</h1>
+    <button mat-raised-button color="primary" routerLink="/conciliation">Run Conciliation</button>
+  </div>
+
+  <ng-container *ngIf="{ cards: cards$ | async, closes: cycleCloses$ | async } as vm">
+    <!-- Card filter -->
+    <mat-form-field appearance="outline" class="max-w-xs mb-4">
+      <mat-label>Filter by card</mat-label>
+      <mat-select [(ngModel)]="selectedCardId">
+        <mat-option [value]="null">All cards</mat-option>
+        <mat-option *ngFor="let card of vm.cards" [value]="card.id">{{ card.strName }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <div *ngIf="!vm.closes?.length" class="text-gray-500 text-center py-12">
+      No cycle closes recorded yet. Run a reconciliation to start tracking cycles.
+    </div>
+
+    <mat-table *ngIf="vm.closes?.length" [dataSource]="filteredCloses(vm.closes || [])">
+      <ng-container matColumnDef="dateClosing">
+        <mat-header-cell *matHeaderCellDef>Closing Date</mat-header-cell>
+        <mat-cell *matCellDef="let cc">{{ cc.dateClosing | date:'dd/MM/yyyy' }}</mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="card">
+        <mat-header-cell *matHeaderCellDef>Card</mat-header-cell>
+        <mat-cell *matCellDef="let cc">{{ getCardName(cc.cardId) }}</mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="openingBalance">
+        <mat-header-cell *matHeaderCellDef>Opening</mat-header-cell>
+        <mat-cell *matCellDef="let cc">{{ cc.decOpeningBalance | currencyPen }}</mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="closingBalance">
+        <mat-header-cell *matHeaderCellDef>Closing</mat-header-cell>
+        <mat-cell *matCellDef="let cc">{{ cc.decClosingBalance | currencyPen }}</mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="interest">
+        <mat-header-cell *matHeaderCellDef>Interest</mat-header-cell>
+        <mat-cell *matCellDef="let cc"
+          [class.text-red-600]="cc.decInterestAmount !== 0">
+          {{ cc.decInterestAmount | currencyPen }}
+        </mat-cell>
+      </ng-container>
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+    </mat-table>
+  </ng-container>
+</div>

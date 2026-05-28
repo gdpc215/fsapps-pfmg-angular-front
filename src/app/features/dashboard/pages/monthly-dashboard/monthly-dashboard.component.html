@@ -1,0 +1,87 @@
+<div class="p-4">
+  <h1 class="text-2xl font-semibold mb-4">Monthly Dashboard</h1>
+
+  <!-- Controls -->
+  <div class="flex items-center gap-4 mb-6">
+    <button mat-icon-button (click)="changeMonth(-1)">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+    <span class="text-lg font-semibold">{{ selectedMonth | date:'MMMM yyyy':'':'es' }}</span>
+    <button mat-icon-button (click)="changeMonth(1)" [disabled]="selectedMonth >= currentMonth">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+    <mat-slide-toggle [(ngModel)]="hideTransfers" (change)="recompute()">
+      Hide transfers
+    </mat-slide-toggle>
+  </div>
+
+  <ng-container *ngIf="data">
+    <!-- Summary cards -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <mat-card>
+        <mat-card-header><mat-card-title>Income</mat-card-title></mat-card-header>
+        <mat-card-content>
+          <p class="text-xl font-mono text-green-600 mt-2">
+            <app-amount-display [value]="data.totalIncome"></app-amount-display>
+          </p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card>
+        <mat-card-header><mat-card-title>Expenses</mat-card-title></mat-card-header>
+        <mat-card-content>
+          <p class="text-xl font-mono text-red-600 mt-2">
+            <app-amount-display [value]="data.totalExpenses"></app-amount-display>
+          </p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card>
+        <mat-card-header><mat-card-title>Net</mat-card-title></mat-card-header>
+        <mat-card-content>
+          <p class="text-xl font-mono mt-2"
+             [class.text-green-600]="data.netAmount >= 0"
+             [class.text-red-600]="data.netAmount < 0">
+            <app-amount-display [value]="data.netAmount"></app-amount-display>
+          </p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- PENDING footnote -->
+    <p *ngIf="data.pendingCount > 0" class="text-sm text-gray-500 mb-4 italic">
+      * Includes {{ data.pendingCount }} pending transactions
+      (<app-amount-display [value]="data.pendingTotal"></app-amount-display>)
+    </p>
+
+    <!-- Breakdown table -->
+    <mat-table [dataSource]="data.bySubcategory" class="mb-4">
+      <ng-container matColumnDef="category">
+        <mat-header-cell *matHeaderCellDef>Category</mat-header-cell>
+        <mat-cell *matCellDef="let row">{{ row.categoryName }}</mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="subcategory">
+        <mat-header-cell *matHeaderCellDef>Subcategory</mat-header-cell>
+        <mat-cell *matCellDef="let row">{{ row.subcategoryName }}</mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="total">
+        <mat-header-cell *matHeaderCellDef>Total</mat-header-cell>
+        <mat-cell *matCellDef="let row">
+          <app-amount-display [value]="row.total"></app-amount-display>
+        </mat-cell>
+      </ng-container>
+      <mat-header-row *matHeaderRowDef="['category','subcategory','total']"></mat-header-row>
+      <mat-row *matRowDef="let r; columns: ['category','subcategory','total'];"></mat-row>
+    </mat-table>
+
+    <!-- Uncategorized rows -->
+    <div *ngIf="data.uncategorizedIncome !== 0" class="flex justify-between px-2 py-1 text-sm text-green-600">
+      <span><em>(Uncategorized — income)</em></span>
+      <app-amount-display [value]="data.uncategorizedIncome"></app-amount-display>
+    </div>
+    <div *ngIf="data.uncategorizedExpenses !== 0" class="flex justify-between px-2 py-1 text-sm text-red-600">
+      <span><em>(Uncategorized — expenses)</em></span>
+      <app-amount-display [value]="data.uncategorizedExpenses"></app-amount-display>
+    </div>
+  </ng-container>
+</div>

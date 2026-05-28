@@ -1,0 +1,80 @@
+<div class="p-4">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-semibold">Recurrent Dashboard</h1>
+    <button mat-raised-button color="warn"
+            [disabled]="!hasPendingCurrent"
+            (click)="markAllPendingDone()">
+      Mark all PENDING as done
+    </button>
+  </div>
+
+  <div *ngIf="dashboardRows.length === 0" class="text-gray-500 text-center py-12">
+    No recurring transactions configured. Add them in
+    <a routerLink="/recurrent-transactions" class="text-blue-600 underline">Recurrent Transactions</a> →
+  </div>
+
+  <div *ngFor="let row of dashboardRows" class="mb-6">
+    <div class="flex items-center gap-2 mb-2">
+      <span class="font-medium text-lg">{{ row.recurrent.strName }}</span>
+      <span class="text-sm text-gray-500">{{ row.accountName }}</span>
+      <span class="text-sm text-gray-400">· {{ row.recurrent.strFrequency }}</span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table mat-table [dataSource]="row.iterations" class="w-full">
+
+        <ng-container matColumnDef="iteration">
+          <th mat-header-cell *matHeaderCellDef>Iteration</th>
+          <td mat-cell *matCellDef="let iter"
+              [class.opacity-60]="!iter.isCurrent && iter.status === 'DONE'"
+              [class.text-red-600]="!iter.isCurrent && iter.status === 'PENDING'">
+            {{ iter.key }}
+            <span *ngIf="iter.isCurrent" class="ml-1 text-xs text-blue-500">(current)</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="targetDate">
+          <th mat-header-cell *matHeaderCellDef>Expected Date</th>
+          <td mat-cell *matCellDef="let iter"
+              [class.opacity-60]="!iter.isCurrent && iter.status === 'DONE'"
+              [class.text-red-600]="!iter.isCurrent && iter.status === 'PENDING'">
+            {{ iter.targetDate ? (iter.targetDate | date:'dd/MM/yyyy') : '—' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let iter">
+            <mat-chip *ngIf="iter.status === 'DONE'" color="primary" selected>DONE</mat-chip>
+            <mat-chip *ngIf="iter.status === 'PENDING'" color="warn" selected>PENDING</mat-chip>
+            <mat-chip *ngIf="iter.status === 'NOT_YET_DUE'">NOT YET DUE</mat-chip>
+            <mat-chip *ngIf="iter.status === 'NOT_CONFIGURED'">NOT CONFIGURED</mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="matchedOn">
+          <th mat-header-cell *matHeaderCellDef>Matched On</th>
+          <td mat-cell *matCellDef="let iter">
+            {{ iter.match?.dateDone ? (iter.match.dateDone | date:'dd/MM/yyyy') : '—' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let iter">
+            <ng-container *ngIf="iter.isCurrent && iter.status === 'PENDING'">
+              <button mat-button color="primary" (click)="markDone(row.recurrent, iter.key)">Mark as done</button>
+            </ng-container>
+            <ng-container *ngIf="iter.status === 'DONE' && iter.match">
+              <button mat-button color="warn" (click)="unlink(iter.match)">Unlink / Undo</button>
+            </ng-container>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="['iteration','targetDate','status','matchedOn','actions']"></tr>
+        <tr mat-row *matRowDef="let r; columns: ['iteration','targetDate','status','matchedOn','actions'];"></tr>
+      </table>
+    </div>
+    <mat-divider class="mt-4"></mat-divider>
+  </div>
+</div>

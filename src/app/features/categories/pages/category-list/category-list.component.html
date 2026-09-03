@@ -1,0 +1,77 @@
+<div class="p-4">
+  <h1 class="text-2xl font-semibold mb-4">Categories &amp; Subcategories</h1>
+
+  <!-- Add category form -->
+  <div class="flex gap-2 mb-6 max-w-md">
+    <mat-form-field appearance="outline" class="flex-1">
+      <mat-label>New category name</mat-label>
+      <input matInput [formControl]="newCategoryName" (keyup.enter)="addCategory()">
+    </mat-form-field>
+    <button mat-raised-button color="primary" (click)="addCategory()">Add</button>
+  </div>
+
+  <ng-container *ngIf="{ cats: categories$ | async, subs: subcategories$ | async } as vm">
+    <div *ngIf="!vm.cats?.length" class="text-gray-500">No categories yet.</div>
+
+    <mat-expansion-panel *ngFor="let cat of vm.cats" class="mb-2">
+      <mat-expansion-panel-header>
+        <mat-panel-title class="flex items-center gap-2 w-full">
+          <ng-container *ngIf="editingCategoryId !== cat.id; else catEditTpl">
+            <span class="flex-1 font-medium">{{ cat.strName }}</span>
+            <button mat-icon-button (click)="startEditCategory(cat); $event.stopPropagation()">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="deleteCategory(cat, vm.subs || []); $event.stopPropagation()">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </ng-container>
+          <ng-template #catEditTpl>
+            <input class="border rounded px-2 py-1 flex-1" [(ngModel)]="editingCategoryName"
+              (keyup.enter)="saveEditCategory(cat)" (keyup.escape)="cancelEditCategory()"
+              (click)="$event.stopPropagation()">
+            <button mat-icon-button (click)="saveEditCategory(cat); $event.stopPropagation()">
+              <mat-icon>check</mat-icon>
+            </button>
+            <button mat-icon-button (click)="cancelEditCategory(); $event.stopPropagation()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </ng-template>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <!-- Subcategories list -->
+      <div *ngFor="let sub of getSubcategories(cat.id, vm.subs || [])"
+           class="flex items-center gap-2 py-1 border-b last:border-0">
+        <ng-container *ngIf="editingSubcategoryId !== sub.id; else subEditTpl">
+          <span class="flex-1">{{ sub.strName }}</span>
+          <button mat-icon-button (click)="startEditSubcategory(sub)">
+            <mat-icon class="text-base">edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="deleteSubcategory(sub)">
+            <mat-icon class="text-base">delete</mat-icon>
+          </button>
+        </ng-container>
+        <ng-template #subEditTpl>
+          <input class="border rounded px-2 py-1 flex-1" [(ngModel)]="editingSubcategoryName"
+            (keyup.enter)="saveEditSubcategory(sub)" (keyup.escape)="cancelEditSubcategory()">
+          <button mat-icon-button (click)="saveEditSubcategory(sub)">
+            <mat-icon class="text-base">check</mat-icon>
+          </button>
+          <button mat-icon-button (click)="cancelEditSubcategory()">
+            <mat-icon class="text-base">close</mat-icon>
+          </button>
+        </ng-template>
+      </div>
+
+      <!-- Add subcategory -->
+      <div class="flex gap-2 mt-3">
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>New subcategory</mat-label>
+          <input matInput [(ngModel)]="newSubcategoryNames[cat.id]"
+            (keyup.enter)="addSubcategory(cat.id)">
+        </mat-form-field>
+        <button mat-button (click)="addSubcategory(cat.id)">Add</button>
+      </div>
+    </mat-expansion-panel>
+  </ng-container>
+</div>

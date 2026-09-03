@@ -1,0 +1,58 @@
+<div class="p-4">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-semibold">Recurring Transactions</h1>
+    <div class="flex gap-2">
+      <button mat-button routerLink="/recurrent-transactions/dashboard">
+        <mat-icon>dashboard</mat-icon> Dashboard
+      </button>
+      <button mat-raised-button color="primary" routerLink="/recurrent-transactions/new">
+        <mat-icon>add</mat-icon> Add Recurrent
+      </button>
+    </div>
+  </div>
+
+  <ng-container *ngIf="recurrents$ | async as recurrents">
+    <div *ngIf="recurrents.length === 0" class="text-gray-500 text-center py-12">
+      No recurring transactions configured. Add one to start tracking.
+    </div>
+
+    <mat-table *ngIf="recurrents.length > 0" [dataSource]="recurrents">
+      <ng-container matColumnDef="name">
+        <mat-header-cell *matHeaderCellDef>Name</mat-header-cell>
+        <mat-cell *matCellDef="let r">{{ r.strName }}</mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="account">
+        <mat-header-cell *matHeaderCellDef>Account</mat-header-cell>
+        <mat-cell *matCellDef="let r">{{ getAccountName(r.accountId, r.accountType) }}</mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="frequency">
+        <mat-header-cell *matHeaderCellDef>Frequency</mat-header-cell>
+        <mat-cell *matCellDef="let r">{{ r.strFrequency }}</mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="mode">
+        <mat-header-cell *matHeaderCellDef>Mode</mat-header-cell>
+        <mat-cell *matCellDef="let r">{{ r.strMatchMode }}</mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="amount">
+        <mat-header-cell *matHeaderCellDef>Est. Amount</mat-header-cell>
+        <mat-cell *matCellDef="let r">
+          <span *ngIf="r.decApproxAmount != null">{{ r.decApproxAmount | currencyPen }}</span>
+          <span *ngIf="r.decApproxAmount == null" class="text-gray-400">—</span>
+        </mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="actions">
+        <mat-header-cell *matHeaderCellDef></mat-header-cell>
+        <mat-cell *matCellDef="let r" class="flex gap-1">
+          <button mat-icon-button matTooltip="Edit" [routerLink]="['/recurrent-transactions', r.id, 'edit']">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button matTooltip="Delete" color="warn" (click)="onDelete(r)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </mat-cell>
+      </ng-container>
+      <mat-header-row *matHeaderRowDef="['name','account','frequency','mode','amount','actions']"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: ['name','account','frequency','mode','amount','actions'];"></mat-row>
+    </mat-table>
+  </ng-container>
+</div>

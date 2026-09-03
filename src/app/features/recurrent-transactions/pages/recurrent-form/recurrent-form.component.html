@@ -1,0 +1,104 @@
+<div class="p-4 max-w-lg">
+  <h1 class="text-2xl font-semibold mb-6">{{ isEdit ? 'Edit Recurrent' : 'New Recurrent Transaction' }}</h1>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput formControlName="strName">
+      <mat-error>Required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Notes (optional)</mat-label>
+      <input matInput formControlName="strNotes">
+    </mat-form-field>
+
+    <!-- Account selector -->
+    <mat-form-field appearance="outline">
+      <mat-label>Account</mat-label>
+      <mat-select formControlName="accountId" (selectionChange)="onAccountSelect($event.value)">
+        <mat-optgroup label="Credit Cards">
+          <mat-option *ngFor="let card of creditCards$ | async" [value]="card.id">{{ card.strName }}</mat-option>
+        </mat-optgroup>
+        <mat-optgroup label="Debit Accounts">
+          <mat-option *ngFor="let acc of debitAccounts$ | async" [value]="acc.id">{{ acc.strName }}</mat-option>
+        </mat-optgroup>
+      </mat-select>
+      <mat-error>Required</mat-error>
+    </mat-form-field>
+
+    <!-- Frequency -->
+    <mat-form-field appearance="outline">
+      <mat-label>Frequency</mat-label>
+      <mat-select formControlName="strFrequency">
+        <mat-option value="MONTHLY">Monthly</mat-option>
+        <mat-option value="YEARLY">Yearly</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Match mode -->
+    <mat-form-field appearance="outline">
+      <mat-label>Match mode</mat-label>
+      <mat-select formControlName="strMatchMode">
+        <mat-option value="MANUAL">Manual</mat-option>
+        <mat-option value="AUTOMATIC">Automatic</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- AUTOMATIC-only fields -->
+    <ng-container *ngIf="isAutomatic">
+      <mat-form-field appearance="outline">
+        <mat-label>Approx. amount</mat-label>
+        <input matInput type="number" formControlName="decApproxAmount" step="0.01">
+        <mat-error>Required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Amount range (±)</mat-label>
+        <input matInput type="number" formControlName="decAmountRange" min="0" step="0.01">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Match string (description contains)</mat-label>
+        <input matInput formControlName="strMatchString">
+        <mat-error>Required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Currency filter (optional)</mat-label>
+        <mat-select formControlName="strCurrency">
+          <mat-option [value]="null">Any</mat-option>
+          <mat-option value="PEN">PEN</mat-option>
+          <mat-option value="USD">USD</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Approx. day of month</mat-label>
+        <input matInput type="number" formControlName="intApproxDay" min="1" max="31">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" *ngIf="isYearly">
+        <mat-label>Approx. month (1–12)</mat-label>
+        <input matInput type="number" formControlName="intApproxMonth" min="1" max="12">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Day range (± days)</mat-label>
+        <input matInput type="number" formControlName="intDayRange" min="0">
+        <mat-error>Required</mat-error>
+      </mat-form-field>
+    </ng-container>
+
+    <!-- Manual: optional approx day -->
+    <mat-form-field appearance="outline" *ngIf="!isAutomatic">
+      <mat-label>Expected day of month (optional)</mat-label>
+      <input matInput type="number" formControlName="intApproxDay" min="1" max="31">
+    </mat-form-field>
+
+    <div class="flex gap-3">
+      <button mat-raised-button color="primary" type="submit">Save</button>
+      <button mat-button type="button" routerLink="/recurrent-transactions">Cancel</button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,86 @@
+<div class="p-4 max-w-2xl">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-semibold">Conciliation</h1>
+    <button mat-button routerLink="/conciliation/history">
+      <mat-icon>history</mat-icon> History
+    </button>
+  </div>
+
+  <form [formGroup]="form" class="flex flex-col gap-4 mb-6">
+    <!-- Card selector -->
+    <mat-form-field appearance="outline" class="max-w-sm">
+      <mat-label>Credit card</mat-label>
+      <mat-select formControlName="cardId">
+        <mat-option *ngFor="let card of cards$ | async" [value]="card.id">
+          {{ card.strName }}
+        </mat-option>
+      </mat-select>
+      <mat-error>Required</mat-error>
+    </mat-form-field>
+
+    <!-- Cycle window display -->
+    <div *ngIf="cycleWindow" class="text-sm text-gray-600 bg-blue-50 p-2 rounded max-w-sm">
+      Cycle: <strong>{{ cycleWindow.cycleStart }}</strong> &rarr; <strong>{{ cycleWindow.closingDate }}</strong>
+    </div>
+
+    <!-- Current balance -->
+    <mat-form-field appearance="outline" class="max-w-sm">
+      <mat-label>Current balance (from statement)</mat-label>
+      <input matInput type="number" formControlName="currentBalance" min="0" step="0.01">
+      <mat-error>Required</mat-error>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" type="button" (click)="onCalculate()" class="w-32">
+      Calculate
+    </button>
+  </form>
+
+  <!-- Results -->
+  <ng-container *ngIf="result">
+    <div *ngIf="isFirstCycle" class="p-3 bg-amber-50 border border-amber-300 rounded text-sm text-amber-800 mb-4">
+      First reconciliation for this card — opening balance assumed 0. If the card had an existing balance before this import, adjust the interest amount manually.
+    </div>
+
+    <mat-card>
+      <mat-card-content>
+        <table class="w-full text-sm">
+          <tr class="border-b">
+            <td class="py-2 text-gray-600">Opening balance</td>
+            <td class="py-2 text-right font-mono">{{ result.openingBalance | currencyPen }}</td>
+          </tr>
+          <tr class="border-b">
+            <td class="py-2 text-gray-600">Cycle movements</td>
+            <td class="py-2 text-right font-mono">{{ result.cycleMovementsSum | currencyPen }}</td>
+          </tr>
+          <tr class="border-b font-semibold">
+            <td class="py-2">Expected closing (A)</td>
+            <td class="py-2 text-right font-mono">{{ result.amountA | currencyPen }}</td>
+          </tr>
+          <tr class="border-b">
+            <td class="py-2 text-gray-600">Current balance (entered)</td>
+            <td class="py-2 text-right font-mono">{{ result.currentBalanceNegated | currencyPen }}</td>
+          </tr>
+          <tr class="border-b">
+            <td class="py-2 text-gray-600">Post-close movements</td>
+            <td class="py-2 text-right font-mono">{{ result.postCloseMovementsSum | currencyPen }}</td>
+          </tr>
+          <tr class="border-b font-semibold">
+            <td class="py-2">Implied closing (B)</td>
+            <td class="py-2 text-right font-mono">{{ result.amountB | currencyPen }}</td>
+          </tr>
+          <tr>
+            <td class="py-2 font-semibold">Interest / Discrepancy</td>
+            <td class="py-2 text-right font-mono font-semibold"
+                [class.text-red-600]="result.interestAmount !== 0"
+                [class.text-green-600]="result.interestAmount === 0">
+              {{ result.interestAmount | currencyPen }}
+            </td>
+          </tr>
+        </table>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button color="primary" (click)="onConfirm()">Confirm &amp; Save</button>
+      </mat-card-actions>
+    </mat-card>
+  </ng-container>
+</div>

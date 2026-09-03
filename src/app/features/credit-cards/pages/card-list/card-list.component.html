@@ -1,0 +1,42 @@
+<div class="p-4">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-semibold">Credit Cards</h1>
+    <button mat-raised-button color="primary" routerLink="/credit-cards/new">
+      <mat-icon>add</mat-icon> Add Credit Card
+    </button>
+  </div>
+
+  <ng-container *ngIf="cards$ | async as cards">
+    <div *ngIf="cards.length === 0" class="text-gray-500 text-center py-12">
+      No credit cards configured yet. Add your first card to get started.
+    </div>
+
+    <mat-card *ngFor="let card of cards" class="mb-3">
+      <mat-card-content class="flex items-center justify-between pt-4">
+        <div>
+          <p class="font-semibold text-lg">{{ card.strName }}</p>
+          <p class="text-sm text-gray-500">
+            Closing day: {{ card.intClosingDay }} &middot; Payment day: {{ card.intPaymentDay }}
+          </p>
+          <ng-container *ngIf="getBalanceInfo(card.id) as info">
+            <p class="text-sm mt-1">
+              Balance: <app-amount-display [value]="info.balance"></app-amount-display>
+              <span *ngIf="info.dateImport" class="text-gray-400 text-xs ml-1">
+                (as of {{ info.dateImport | date:'dd/MM/yyyy' }})
+              </span>
+              <span *ngIf="!info.dateImport" class="text-gray-400 text-xs ml-1">— no import yet</span>
+            </p>
+          </ng-container>
+        </div>
+        <div class="flex gap-2">
+          <button mat-icon-button matTooltip="Edit" (click)="onEdit(card)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button matTooltip="Delete" color="warn" (click)="onDelete(card)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </ng-container>
+</div>

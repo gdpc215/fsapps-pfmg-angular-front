@@ -1,0 +1,61 @@
+<div class="p-4">
+  <h1 class="text-2xl font-semibold mb-1">Category Rules</h1>
+  <p class="text-sm text-gray-500 mb-4">Rules are evaluated top-to-bottom. First match wins.</p>
+
+  <!-- Add rule form -->
+  <ng-container *ngIf="{ subs: subcategories$ | async, cats: categories$ | async } as vm">
+    <div class="flex flex-wrap gap-3 mb-6 p-3 bg-gray-50 rounded">
+      <mat-form-field appearance="outline" class="w-36">
+        <mat-label>Match type</mat-label>
+        <mat-select [formControl]="addForm.controls['strMatchType']">
+          <mat-option *ngFor="let mt of matchTypes" [value]="mt">{{ mt }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-52">
+        <mat-label>Match string</mat-label>
+        <input matInput [formControl]="addForm.controls['strMatchString']">
+        <mat-error>Required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-56">
+        <mat-label>Subcategory</mat-label>
+        <mat-select [formControl]="addForm.controls['subcategoryId']">
+          <mat-optgroup *ngFor="let cat of vm.cats" [label]="cat.strName">
+            <mat-option *ngFor="let sub of getSubcategoriesByCategory(cat.id, vm.subs || [])" [value]="sub.id">
+              {{ sub.strName }}
+            </mat-option>
+          </mat-optgroup>
+        </mat-select>
+        <mat-error>Required</mat-error>
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" (click)="addRule()">Add Rule</button>
+    </div>
+
+    <!-- Rules list with drag-to-reorder -->
+    <ng-container *ngIf="rules$ | async as rules">
+      <div *ngIf="rules.length === 0" class="text-gray-500">No rules yet.</div>
+      <div cdkDropList (cdkDropListDropped)="onDrop($event)">
+        <div *ngFor="let rule of rules; let i = index"
+             cdkDrag
+             class="flex items-center gap-2 p-2 border-b bg-white hover:bg-gray-50">
+          <mat-icon cdkDragHandle class="cursor-grab text-gray-400">drag_indicator</mat-icon>
+          <span class="w-6 text-xs text-gray-400 font-mono">{{ rule.intPriority }}</span>
+          <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-mono">{{ rule.strMatchType }}</span>
+          <span class="flex-1 font-mono text-sm truncate">{{ rule.strMatchString }}</span>
+          <span class="text-sm text-gray-600 truncate max-w-48">→ {{ resolveSubcategoryLabel(rule.subcategoryId, vm.subs || [], vm.cats || []) }}</span>
+          <button mat-icon-button (click)="moveUp(i)" [disabled]="i === 0" matTooltip="Move up">
+            <mat-icon class="text-sm">keyboard_arrow_up</mat-icon>
+          </button>
+          <button mat-icon-button (click)="moveDown(rules, i)" [disabled]="i === rules.length - 1" matTooltip="Move down">
+            <mat-icon class="text-sm">keyboard_arrow_down</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="deleteRule(rule)" matTooltip="Delete rule">
+            <mat-icon class="text-sm">delete</mat-icon>
+          </button>
+        </div>
+      </div>
+    </ng-container>
+  </ng-container>
+</div>

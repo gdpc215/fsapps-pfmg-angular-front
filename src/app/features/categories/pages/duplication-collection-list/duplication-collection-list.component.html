@@ -1,0 +1,55 @@
+<div class="p-4">
+  <h1 class="text-2xl font-semibold mb-1">Duplication Collections</h1>
+  <p class="text-sm text-gray-500 mb-4">
+    Collections group merchant name variations for duplicate detection.
+    A transaction is flagged if its description matches any string in a collection that also matches an existing transaction.
+  </p>
+
+  <!-- Add collection -->
+  <div class="flex gap-2 mb-6 max-w-md">
+    <mat-form-field appearance="outline" class="flex-1">
+      <mat-label>New collection name</mat-label>
+      <input matInput [(ngModel)]="newCollectionName" (keyup.enter)="addCollection()">
+    </mat-form-field>
+    <button mat-raised-button color="primary" (click)="addCollection()">Add Collection</button>
+  </div>
+
+  <ng-container *ngIf="collections$ | async as collections">
+    <div *ngIf="collections.length === 0" class="text-gray-500">No collections yet.</div>
+
+    <div *ngFor="let col of collections" class="mb-4 p-4 border rounded-lg bg-white">
+      <!-- Collection header -->
+      <div class="flex items-center gap-2 mb-3">
+        <ng-container *ngIf="editingCollectionId !== col.id; else nameEditTpl">
+          <span class="font-semibold flex-1">{{ col.strName }}</span>
+          <button mat-icon-button (click)="startEditName(col)"><mat-icon>edit</mat-icon></button>
+          <button mat-icon-button color="warn" (click)="deleteCollection(col)"><mat-icon>delete</mat-icon></button>
+        </ng-container>
+        <ng-template #nameEditTpl>
+          <input class="border rounded px-2 py-1 flex-1" [(ngModel)]="editingCollectionName"
+            (keyup.enter)="saveEditName(col)" (keyup.escape)="cancelEditName()">
+          <button mat-icon-button (click)="saveEditName(col)"><mat-icon>check</mat-icon></button>
+          <button mat-icon-button (click)="cancelEditName()"><mat-icon>close</mat-icon></button>
+        </ng-template>
+      </div>
+
+      <!-- String chips -->
+      <mat-chip-set class="mb-2">
+        <mat-chip *ngFor="let str of col.strings" (removed)="removeString(col, str)">
+          {{ str }}
+          <button matChipRemove><mat-icon>cancel</mat-icon></button>
+        </mat-chip>
+      </mat-chip-set>
+
+      <!-- Add string -->
+      <div class="flex gap-2 mt-2 max-w-xs">
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>Add string</mat-label>
+          <input matInput [(ngModel)]="newStringInputs[col.id]"
+            (keyup.enter)="addString(col)" placeholder="e.g. GROCERY">
+        </mat-form-field>
+        <button mat-button (click)="addString(col)">Add</button>
+      </div>
+    </div>
+  </ng-container>
+</div>

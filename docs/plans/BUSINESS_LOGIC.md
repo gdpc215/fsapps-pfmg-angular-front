@@ -1,6 +1,6 @@
 # Business Logic Reference — fsapps-pfmg
 
-**Version:** 1.1
+**Version:** 1.2
 **Date:** 2026-05-14
 **Project:** fsapps-pfmg
 **Purpose:** Authoritative specification of all algorithms, decision trees, and rule systems. Whenever design documents (DESIGN.md, DESIGN_LOCAL.md) describe logic at a high level, this document provides the precise decision trees and pseudocode.
@@ -18,6 +18,7 @@
 7. [Transaction Status Transitions](#7--transaction-status-transitions)
 8. [Import Wizard Decision Flow](#8--import-wizard-decision-flow)
 9. [Excel Parsing Rules](#9--excel-parsing-rules)
+10. [Monthly Dashboard Calculation](#10--monthly-dashboard-calculation)
 
 ---
 
@@ -612,3 +613,62 @@ Rows where `Fecha`, `Descripcion`, `Moneda`, or `Monto` are null/empty are silen
 ### 9.4 amountPen computation
 
 `amountPen` is always computed by `ExcelParserService.parseFile()` at parse time using the `usdExchangeRate` parameter. Downstream services and Step 3 of the wizard use `row.amountPen` directly — there is no re-conversion at any later stage.
+
+---
+
+## 10 — Monthly Dashboard Calculation
+
+### 10.1 Purpose
+
+Given a target month (`'YYYY-MM'`), compute the total income, total expenses, and a subcategory breakdown from the full transaction set. Used by `MonthlyDashboardComponent` via `DashboardCalculatorService.computeMonthly()`.
+
+### 10.2 Transaction set
+
+- Include: ACTIVE and PENDING transactions.
+- Exclude: DELETED transactions.
+- Month filter: `transaction.dateTransaction.startsWith(month)` — string prefix match; no date parsing required.
+- All accounts included (credit cards and debit accounts combined).
+
+### 10.3 Income / Expense classification
+
+| Condition | Classification |
+|---|---|
+| `decAmountPen > 0` | Income |
+| `decAmountPen < 0` | Expense |
+| `decAmountPen === 0` | Excluded from both totals |
+
+Transfers are not excluded. A debit-to-debit transfer adds `−amount` on the source and `+amount` on the destination; the net effect across all accounts is zero, so combined totals remain accurate.
+
+### 10.4 Decision Tree
+
+```
+function computeMonthly(month, transactions, subcategories, categories):
+  inMonth = transactions where strStatus != 'DELETED'
+                           and dateTransaction starts with month
+
+  totalIncome   = sum(t.decAmountPen) for t in inMonth where t.decAmountPen > 0
+  totalExpenses = sum(t.decAmountPen) for t in inMonth where t.decAmountPen < 0
+  netAmount     = totalIncome + totalExpenses   // negative = net expense month
+
+  // Group by subcategory
+  subcategoryMap = {}
+  for t in inMonth where t.subcategoryId is not null:
+    subcategoryMap[t.subcategoryId] += t.decAmountPen
+
+  bySubcategory = for each (id, total) in subcategoryMap:
+    sub = find subcategory by id
+    cat = find category by sub.categoryId
+    yield { subcategoryId: id, subcategoryName: sub.strName,
+            categoryName: cat.strName, total }
+
+  uncategorizedTotal = sum(t.decAmountPen) for t in inMonth where t.subcategoryId is null
+
+  return { month, totalIncome, totalExpenses, netAmount, bySubcategory, uncategorizedTotal }
+```
+
+### 10.5 Display conventions
+
+- `totalExpenses` is stored as a negative number; the UI displays `abs(totalExpenses)` in red.
+- `netAmount` is displayed with sign: red if negative (net expense), green if positive (net income).
+- `bySubcategory` is sorted by `abs(total)` descending so the highest-spending subcategory appears first.
+- The "Uncategorized" row is always shown last regardless of amount.

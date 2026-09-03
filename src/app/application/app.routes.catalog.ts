@@ -1,14 +1,16 @@
-export const CatalogRoutes = {
-  APP: 'app',
-
-  // Main routes
-  HOME: 'home',
-  ABOUT: 'about',
-  ERROR: 'error',
-
-  // NESTED: {
-  //   BASE: 'nested',
-  //   CATEGORY: (id: string) => `${id}`,
-  // },
-
+export const ROUTES = {
+  CREDIT_CARDS:            'credit-cards',
+  TRANSACTIONS:            'transactions',
+  IMPORT:                  'import',
+  CATEGORIES:              'categories',
+  CATEGORY_RULES:          'categories/rules',
+  DUPLICATION_COLLECTIONS: 'categories/duplications',
+  CONCILIATION:            'conciliation',
+  DEBIT_ACCOUNTS:          'debit-accounts',
+  RECURRENT_TRANSACTIONS:  'recurrent-transactions',
+  RECURRENT_DASHBOARD:     'recurrent-transactions/dashboard',
+  EXPLORER:                'explorer',
+  DASHBOARD_MONTHLY:       'dashboard/monthly',
+  DASHBOARD_CYCLE:         'dashboard/cycle',
+  SETTINGS:                'settings',
 } as const;

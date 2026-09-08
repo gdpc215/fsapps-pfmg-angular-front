@@ -2,6 +2,7 @@ export const ROUTES = {
   CREDIT_CARDS:            'credit-cards',
   TRANSACTIONS:            'transactions',
   IMPORT:                  'import',
+  GMAIL_SYNC:              'gmail-sync',
   CATEGORIES:              'categories',
   CATEGORY_RULES:          'categories/rules',
   DUPLICATION_COLLECTIONS: 'categories/duplications',

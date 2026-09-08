@@ -1,0 +1,140 @@
+<div class="p-4 max-w-5xl">
+  <h1 class="text-2xl font-semibold mb-4">Gmail Sync</h1>
+
+  <div *ngIf="!configured"
+       class="p-3 bg-amber-50 border border-amber-300 rounded text-sm text-amber-800 mb-4">
+    Set the connector URL and token first in
+    <a routerLink="/settings" class="underline font-medium">Settings &rarr; Gmail Sync</a>.
+  </div>
+
+  <mat-card class="mb-4">
+    <mat-card-content>
+      <div class="flex flex-wrap gap-4 items-center">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Since</mat-label>
+          <input matInput type="datetime-local" [(ngModel)]="sinceDateTime">
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Until</mat-label>
+          <input matInput type="datetime-local" [(ngModel)]="untilDateTime">
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" *ngIf="hasFetched && hasUsdRows">
+          <mat-label>USD &rarr; PEN rate</mat-label>
+          <input matInput type="number" min="0.01" step="0.001"
+                 [(ngModel)]="usdExchangeRate" (ngModelChange)="onRateChange()">
+        </mat-form-field>
+
+        <button mat-raised-button color="primary"
+                [disabled]="!configured || isLoading"
+                (click)="onFetch()">
+          <mat-icon>mail</mat-icon>
+          Fetch
+        </button>
+        <mat-progress-spinner *ngIf="isLoading" diameter="24" mode="indeterminate"></mat-progress-spinner>
+      </div>
+      <p *ngIf="settings?.strLastGmailSyncAt" class="text-xs text-gray-400 mt-2">
+        Last synced: {{ settings.strLastGmailSyncAt | date:'medium' }}
+      </p>
+    </mat-card-content>
+  </mat-card>
+
+  <ng-container *ngIf="hasFetched && !isLoading">
+    <p class="text-sm text-gray-500 mb-3" *ngIf="lastResponseMeta">
+      {{ lastResponseMeta.count }} email(s) parsed
+      <span *ngIf="lastResponseMeta.since">
+        &middot; {{ lastResponseMeta.since }} &rarr; {{ lastResponseMeta.until }}
+      </span>
+    </p>
+
+    <div *ngIf="unparsed.length"
+         class="p-3 bg-amber-50 border border-amber-300 rounded text-sm text-amber-800 mb-4">
+      <p class="font-medium">{{ unparsed.length }} email(s) could not be parsed:</p>
+      <ul class="list-disc ml-5 mt-1">
+        <li *ngFor="let u of unparsed">
+          {{ u.subject }} <span class="text-amber-600">({{ u.reason }})</span>
+        </li>
+      </ul>
+    </div>
+
+    <div *ngIf="rows.length === 0" class="text-sm text-gray-500">No movements in this window.</div>
+
+    <div *ngFor="let row of rows"
+         [class.opacity-50]="row.flag === 'AUTO_DUPLICATE' || row.alreadyProcessed"
+         [class.bg-yellow-50]="row.flag === 'POTENTIAL_DUPLICATE'"
+         class="border-b py-2 px-2">
+      <div class="flex items-start gap-3">
+        <mat-checkbox [(ngModel)]="row.checked"
+                      class="mt-2"
+                      [disabled]="row.flag === 'AUTO_DUPLICATE' || !row.resolved || row.alreadyProcessed">
+        </mat-checkbox>
+
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 text-sm">
+            <span class="text-gray-500 font-mono">{{ row.raw.dateTransaction }}</span>
+            <span class="flex-1 truncate">{{ row.raw.description }}</span>
+            <span class="text-xs text-gray-400">{{ row.movement.rawType }}</span>
+            <span class="font-mono"
+                  [class.text-red-600]="row.raw.amount < 0"
+                  [class.text-green-600]="row.raw.amount >= 0">
+              {{ row.raw.amountPen | currencyPen }}
+            </span>
+            <span class="text-xs text-gray-400" *ngIf="row.movement.currency === 'USD'">
+              ({{ row.movement.currency }} {{ row.movement.amount }})
+            </span>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 mt-1">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-44">
+              <mat-label>Account</mat-label>
+              <mat-select [ngModel]="row.resolved?.accountId"
+                          (ngModelChange)="onAccountChange(row, $event)">
+                <mat-option *ngFor="let o of accountOptions" [value]="o.accountId">{{ o.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <span *ngIf="!row.resolved" class="text-xs text-red-600">
+              card {{ row.movement.cardLast4 || '?' }} &mdash; pick an account
+            </span>
+
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-56">
+              <mat-label>Subcategory</mat-label>
+              <mat-select [(ngModel)]="row.subcategoryId">
+                <mat-option [value]="undefined">&mdash; none &mdash;</mat-option>
+                <mat-option *ngFor="let s of subcategoryLabels | keyvalue" [value]="s.key">{{ s.value }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <button mat-stroked-button type="button" class="text-xs" (click)="togglePending(row)">
+              {{ row.pendingFlag ? 'Pending ✓' : 'Mark pending' }}
+            </button>
+
+            <span *ngIf="row.flag === 'AUTO_DUPLICATE'" class="text-xs text-gray-400 italic">
+              Auto-duplicate (skipped)
+            </span>
+            <span *ngIf="row.flag === 'POTENTIAL_DUPLICATE'" class="text-xs text-yellow-700">
+              &#9888; Potential duplicate
+            </span>
+            <span *ngIf="row.alreadyProcessed" class="text-xs text-gray-400 italic">
+              Already imported earlier
+            </span>
+          </div>
+
+          <div *ngIf="row.matchingTransaction"
+               class="text-xs text-gray-500 mt-1 pl-2 border-l-2 border-yellow-300">
+            matches: {{ row.matchingTransaction.dateTransaction }} &middot;
+            {{ row.matchingTransaction.strDescription }} &middot;
+            {{ row.matchingTransaction.decAmountPen | currencyPen }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 mt-6" *ngIf="rows.length">
+      <button mat-raised-button color="primary"
+              [disabled]="importableCount === 0 || rateInvalid"
+              (click)="onImport()">
+        Import selected ({{ importableCount }})
+      </button>
+      <span *ngIf="rateInvalid" class="text-xs text-red-600">Enter a valid USD &rarr; PEN rate.</span>
+    </div>
+  </ng-container>
+</div>

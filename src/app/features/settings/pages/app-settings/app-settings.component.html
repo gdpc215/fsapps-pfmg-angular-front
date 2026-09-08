@@ -1,7 +1,7 @@
 <div class="p-4">
   <h1 class="text-2xl font-semibold mb-6">Settings</h1>
 
-  <mat-card class="max-w-lg" *ngIf="settings$ | async as settings">
+  <mat-card class="max-w-lg mb-6" *ngIf="settings$ | async as settings">
     <mat-card-header>
       <mat-card-title>Import Settings</mat-card-title>
     </mat-card-header>
@@ -22,10 +22,62 @@
           (change)="onP2Toggle($event.checked)">
         </mat-slide-toggle>
       </div>
+    </mat-card-content>
+  </mat-card>
 
-      <mat-divider class="mt-4"></mat-divider>
-      <div class="mt-6 text-sm text-gray-400 italic">
-        More settings coming soon.
+  <mat-card class="max-w-2xl" *ngIf="(settings$ | async) as settings">
+    <mat-card-header>
+      <mat-card-title>Gmail Sync</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-divider class="mb-4"></mat-divider>
+
+      <p class="text-sm text-gray-500 mb-4">
+        Connect the BCP Gmail connector Web App so transaction-notification emails can be
+        parsed and imported from <a routerLink="/gmail-sync" class="underline">Gmail Sync</a>.
+      </p>
+
+      <div class="flex flex-col gap-3">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Web App URL</mat-label>
+          <input matInput [(ngModel)]="gmailUrl" placeholder="https://script.google.com/macros/s/.../exec">
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Token</mat-label>
+          <input matInput [(ngModel)]="gmailToken" placeholder="API_TOKEN script property value">
+        </mat-form-field>
+      </div>
+
+      <div class="mt-5" *ngIf="(accountOptions$ | async) as accountOptions">
+        <p class="font-medium text-sm mb-2">Card mapping (last 4 digits &rarr; account)</p>
+        <div class="flex items-center gap-2 mb-2" *ngFor="let entry of cardMapDraft; let i = index">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-28">
+            <mat-label>Last 4</mat-label>
+            <input matInput maxlength="4" [(ngModel)]="entry.strLast4">
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="flex-1">
+            <mat-label>Account</mat-label>
+            <mat-select [ngModel]="entry.accountId"
+                        (ngModelChange)="onAccountIdPicked(i, $event, accountOptions)">
+              <mat-option *ngFor="let o of accountOptions" [value]="o.accountId">{{ o.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <button mat-icon-button type="button" (click)="removeCardMapRow(i)" aria-label="Remove row">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+        <button mat-stroked-button type="button" (click)="addCardMapRow()">
+          <mat-icon>add</mat-icon> Add card
+        </button>
+      </div>
+
+      <div class="mt-5 flex items-center gap-4">
+        <button mat-raised-button color="primary" type="button" (click)="saveGmailSettings()">
+          Save Gmail settings
+        </button>
+        <span class="text-xs text-gray-400" *ngIf="settings.strLastGmailSyncAt">
+          Last synced: {{ settings.strLastGmailSyncAt | date:'medium' }}
+        </span>
       </div>
     </mat-card-content>
   </mat-card>

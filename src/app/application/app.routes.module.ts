@@ -24,6 +24,11 @@ const routes: Routes = [
           import('../features/import/import.module').then(m => m.ImportModule),
       },
       {
+        path: 'gmail-sync',
+        loadChildren: () =>
+          import('../features/gmail-sync/gmail-sync.module').then(m => m.GmailSyncModule),
+      },
+      {
         path: 'categories',
         loadChildren: () =>
           import('../features/categories/categories.module').then(m => m.CategoriesModule),

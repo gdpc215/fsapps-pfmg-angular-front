@@ -1,0 +1,14 @@
+{
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FSApps Launch",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://192.168.1.12:2105",
+      // "preLaunchTask": "Start Adminsite from Key Vault"
+      "preLaunchTask": "NPM Start"
+    }
+  ]
+}

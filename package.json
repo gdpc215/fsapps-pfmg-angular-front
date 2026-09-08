@@ -4,7 +4,7 @@
   "description": "Angular frontend for project PFMG",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --host 0.0.0.0 --port 2105",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
